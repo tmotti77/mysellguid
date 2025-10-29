@@ -149,9 +149,9 @@ export class Sale {
   @Column({ default: 0 })
   saves: number;
 
-  // ML vector for recommendations (pgvector)
-  @Column({ type: 'vector', length: 1536, nullable: true })
-  embedding: number[];
+  // ML vector for recommendations (pgvector) - disabled until pgvector is installed
+  // @Column({ type: 'vector', length: 1536, nullable: true })
+  // embedding: number[];
 
   @CreateDateColumn()
   createdAt: Date;
