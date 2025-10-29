@@ -1,0 +1,33 @@
+{
+  "name": "mysellguid",
+  "version": "1.0.0",
+  "description": "Local sales discovery platform - Find nearby sales and discounts in real-time",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "mobile",
+    "web",
+    "shared"
+  ],
+  "scripts": {
+    "backend": "cd backend && npm run start:dev",
+    "mobile": "cd mobile && npm start",
+    "web": "cd web && npm run dev",
+    "install-all": "npm install && npm install --workspaces",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces"
+  },
+  "keywords": [
+    "sales",
+    "discounts",
+    "local-shopping",
+    "geospatial",
+    "real-time"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
