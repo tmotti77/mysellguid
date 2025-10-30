@@ -8,7 +8,9 @@ import { StoresModule } from './modules/stores/stores.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { ScrapingModule } from './modules/scraping/scraping.module';
 import { MlModule } from './modules/ml/ml.module';
+import { FirebaseModule } from './modules/firebase/firebase.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
@@ -56,7 +58,9 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     SalesModule,
     ScrapingModule,
     MlModule,
+    FirebaseModule,
     NotificationsModule,
+    SeedModule,
   ],
 })
 export class AppModule {}
