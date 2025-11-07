@@ -11,13 +11,40 @@ export class StoresService {
   ) {}
 
   async create(storeData: Partial<Store>): Promise<Store> {
-    // Create PostGIS POINT from latitude and longitude
-    if (storeData.latitude && storeData.longitude) {
-      storeData.location = `POINT(${storeData.longitude} ${storeData.latitude})`;
+    // Use raw SQL to insert with PostGIS geography (same approach as seed script)
+    if (!storeData.latitude || !storeData.longitude) {
+      throw new Error('Latitude and longitude are required');
     }
 
-    const store = this.storesRepository.create(storeData);
-    return this.storesRepository.save(store);
+    const result = await this.storesRepository.query(
+      `INSERT INTO stores (name, description, category, address, city, country, latitude, longitude, location, "phoneNumber", email, website, "instagramHandle", "facebookPage", "ownerId", "isVerified", rating, "reviewCount", "isActive")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, ST_SetSRID(ST_Point($9, $10), 4326)::geography, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+       RETURNING *`,
+      [
+        storeData.name,
+        storeData.description || '',
+        storeData.category || 'other',
+        storeData.address || '',
+        storeData.city || '',
+        storeData.country || '',
+        storeData.latitude,
+        storeData.longitude,
+        storeData.longitude,
+        storeData.latitude,
+        storeData.phoneNumber || null,
+        storeData.email || null,
+        storeData.website || null,
+        storeData.instagramHandle || null,
+        storeData.facebookPage || null,
+        storeData.ownerId || null,
+        storeData.isVerified || false,
+        storeData.rating || 0,
+        storeData.reviewCount || 0,
+        storeData.isActive !== undefined ? storeData.isActive : true,
+      ],
+    );
+
+    return result[0];
   }
 
   async findAll(): Promise<Store[]> {
@@ -75,11 +102,18 @@ export class StoresService {
   async update(id: string, updateData: Partial<Store>): Promise<Store> {
     const store = await this.findOne(id);
 
-    // Update location if coordinates changed
+    // If coordinates changed, use raw SQL to update location
     if (updateData.latitude && updateData.longitude) {
-      updateData.location = `POINT(${updateData.longitude} ${updateData.latitude})`;
+      await this.storesRepository.query(
+        `UPDATE stores
+         SET latitude = $1, longitude = $2, location = ST_SetSRID(ST_Point($3, $4), 4326)::geography
+         WHERE id = $5`,
+        [updateData.latitude, updateData.longitude, updateData.longitude, updateData.latitude, id],
+      );
+      delete updateData.location; // Remove from updateData to avoid conflict
     }
 
+    // Update other fields normally
     Object.assign(store, updateData);
     return this.storesRepository.save(store);
   }

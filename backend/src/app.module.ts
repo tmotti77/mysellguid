@@ -11,6 +11,7 @@ import { MlModule } from './modules/ml/ml.module';
 import { FirebaseModule } from './modules/firebase/firebase.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { SeedModule } from './seed/seed.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { SeedModule } from './seed/seed.module';
     }),
 
     // Feature modules
+    HealthModule,
     AuthModule,
     UsersModule,
     StoresModule,

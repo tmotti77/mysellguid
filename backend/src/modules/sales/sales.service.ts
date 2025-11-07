@@ -22,13 +22,39 @@ export class SalesService {
   ) {}
 
   async create(saleData: Partial<Sale>): Promise<Sale> {
-    // Create PostGIS POINT from latitude and longitude
-    if (saleData.latitude && saleData.longitude) {
-      saleData.location = `POINT(${saleData.longitude} ${saleData.latitude})`;
+    // Use raw SQL to insert with PostGIS geography (same approach as seed script)
+    if (!saleData.latitude || !saleData.longitude) {
+      throw new Error('Latitude and longitude are required');
     }
 
-    const sale = this.salesRepository.create(saleData);
-    return this.salesRepository.save(sale);
+    const result = await this.salesRepository.query(
+      `INSERT INTO sales (title, description, category, "discountPercentage", "originalPrice", "salePrice", currency, "startDate", "endDate", images, "storeId", latitude, longitude, location, status, source, "sourceUrl", "sourceId")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, ST_SetSRID(ST_Point($14, $15), 4326)::geography, $16, $17, $18, $19)
+       RETURNING *`,
+      [
+        saleData.title,
+        saleData.description || '',
+        saleData.category || 'other',
+        saleData.discountPercentage || 0,
+        saleData.originalPrice || null,
+        saleData.salePrice || null,
+        saleData.currency || 'ILS',
+        saleData.startDate || new Date(),
+        saleData.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default 30 days
+        saleData.images || [],
+        saleData.storeId,
+        saleData.latitude,
+        saleData.longitude,
+        saleData.longitude,
+        saleData.latitude,
+        saleData.status || 'active',
+        saleData.source || 'store_dashboard',
+        saleData.sourceUrl || null,
+        saleData.sourceId || null,
+      ],
+    );
+
+    return result[0];
   }
 
   async findAll(options?: {
@@ -153,11 +179,18 @@ export class SalesService {
   async update(id: string, updateData: Partial<Sale>): Promise<Sale> {
     const sale = await this.findOne(id);
 
-    // Update location if coordinates changed
+    // If coordinates changed, use raw SQL to update location
     if (updateData.latitude && updateData.longitude) {
-      updateData.location = `POINT(${updateData.longitude} ${updateData.latitude})`;
+      await this.salesRepository.query(
+        `UPDATE sales
+         SET latitude = $1, longitude = $2, location = ST_SetSRID(ST_Point($3, $4), 4326)::geography
+         WHERE id = $5`,
+        [updateData.latitude, updateData.longitude, updateData.longitude, updateData.latitude, id],
+      );
+      delete updateData.location; // Remove from updateData to avoid conflict
     }
 
+    // Update other fields normally
     Object.assign(sale, updateData);
     return this.salesRepository.save(sale);
   }
