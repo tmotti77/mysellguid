@@ -87,16 +87,21 @@ mysellguid/
 
 ## Getting Started
 
+**📚 Quick Start Guides:**
+- **[LOCAL_MACHINE_SETUP.md](LOCAL_MACHINE_SETUP.md)** - **START HERE!** Complete step-by-step setup with cloud databases (Recommended)
+- **[LOCAL_DATABASE_SETUP.md](LOCAL_DATABASE_SETUP.md)** - Run PostgreSQL and Redis locally instead of cloud
+- **[COMPLETE_PROJECT_SUMMARY.md](COMPLETE_PROJECT_SUMMARY.md)** - Full project analysis, architecture, and roadmap
+
 ### Prerequisites
 
 - Node.js 18+ and npm 9+
-- PostgreSQL 15+ with PostGIS extension
-- Redis 7+
+- PostgreSQL 15+ with PostGIS extension (or use cloud database - see LOCAL_MACHINE_SETUP.md)
+- Redis 7+ (or use cloud Redis - see LOCAL_MACHINE_SETUP.md)
 - Docker & Docker Compose (optional)
-- AWS Account
-- OpenAI API Key
-- Apify API Key
-- Firebase Project (for FCM)
+- AWS Account (optional for S3 image storage)
+- OpenAI API Key (optional for AI features)
+- Apify API Key (optional for social media scraping)
+- Firebase Project (optional for push notifications)
 
 ### Environment Variables
 
