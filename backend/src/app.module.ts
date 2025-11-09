@@ -34,7 +34,10 @@ import { HealthModule } from './modules/health/health.module';
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: configService.get('NODE_ENV') === 'development', // Disable in production
         logging: configService.get('NODE_ENV') === 'development',
-        ssl: configService.get('NODE_ENV') === 'production',
+        ssl: configService.get('DATABASE_HOST')?.includes('neon.tech') ? { rejectUnauthorized: false } : configService.get('NODE_ENV') === 'production',
+        extra: {
+          connectionLimit: 10,
+        },
       }),
       inject: [ConfigService],
     }),

@@ -20,10 +20,10 @@ MySellGuid helps you discover sales and discounts from nearby stores in real-tim
 
 ### Backend
 - **Framework**: NestJS (Node.js + TypeScript)
-- **Database**: PostgreSQL 15 + PostGIS (geospatial queries)
-- **Caching**: Redis
+- **Database**: Neon PostgreSQL 17 + PostGIS (IPv4 compatible, geospatial queries)
+- **Caching**: Redis (Upstash)
 - **Queue**: Bull (Redis-backed job queue)
-- **Cloud**: AWS (EC2, RDS, S3, ElastiCache)
+- **MCP Integration**: Claude can control database via Neon MCP server
 
 ### Mobile
 - **Framework**: React Native + Expo

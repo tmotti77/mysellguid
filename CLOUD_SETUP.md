@@ -5,22 +5,22 @@ Follow these steps exactly and you'll have a working app!
 
 ---
 
-## Step 1: Set Up PostgreSQL Database with Supabase (5 minutes)
+## Step 1: Set Up PostgreSQL Database with Neon (5 minutes)
 
-### 1.1 Create Supabase Account
-1. Go to: https://supabase.com/dashboard
-2. Click **"Start your project"** or **"Sign Up"**
+### 1.1 Create Neon Account
+1. Go to: https://neon.tech
+2. Click **"Sign up"**
 3. Sign up with GitHub or email
 
 ### 1.2 Create New Project
-1. Click **"New Project"**
+1. Click **"Create a project"**
 2. Fill in:
-   - **Name**: `mysellguid` (or any name you like)
+   - **Name**: `mysell` (or any name you like)
    - **Database Password**: Create a strong password (SAVE THIS!)
-   - **Region**: Choose closest to you
-   - **Pricing Plan**: Free (should be selected)
-3. Click **"Create new project"**
-4. ⏰ Wait 2-3 minutes while it sets up (you'll see a progress bar)
+   - **Region**: Choose **US East** (best IPv4 support)
+   - **Enable Authentication**: ✅ **Turn this ON** (for user management)
+3. Click **"Create project"**
+4. ⏰ Wait 1-2 minutes while it sets up
 
 ### 1.3 Get Database Connection Details
 Once your project is ready:

@@ -75,19 +75,15 @@ sudo -u postgres psql mysellguid -c "CREATE EXTENSION postgis;"
 
 #### Option B: Cloud PostgreSQL (Recommended)
 
-Use a cloud provider that supports PostGIS:
-
-**Supabase** (Recommended):
-1. Go to [supabase.com](https://supabase.com)
-2. Create a new project
-3. Copy connection details
-4. Update `backend/.env` with connection string
-
-**Neon**:
+**Neon** (Recommended - IPv4 Compatible):
 1. Go to [neon.tech](https://neon.tech)
-2. Create a new project with PostGIS
-3. Copy connection details
-4. Update `backend/.env`
+2. Create a new project
+3. **Enable authentication** when prompted (for user management)
+4. Choose **US East** region for best IPv4 compatibility
+5. Copy connection details from Settings → Database
+6. Update `backend/.env` with connection string
+
+**Note:** Supabase requires paid plan for IPv4 support. Neon provides free IPv4 compatibility.
 
 ### Step 3: Redis Setup
 
@@ -141,12 +137,12 @@ JWT_REFRESH_SECRET=your-dev-refresh-secret-here
 
 **Cloud configuration**:
 ```env
-# Supabase example
-DATABASE_HOST=db.your-project.supabase.co
+# Neon example
+DATABASE_HOST=ep-your-endpoint.pooler.c-3.us-east-1.aws.neon.tech
 DATABASE_PORT=5432
-DATABASE_USER=postgres
-DATABASE_PASSWORD=your-password
-DATABASE_NAME=postgres
+DATABASE_USER=neondb_owner
+DATABASE_PASSWORD=your-neon-password
+DATABASE_NAME=neondb
 
 # Upstash Redis example
 REDIS_HOST=your-redis.upstash.io

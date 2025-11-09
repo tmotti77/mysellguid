@@ -1,11 +1,8 @@
 {
   "mcpServers": {
-    "postgres": {
+    "neon": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres"],
-      "env": {
-        "DATABASE_URL": "postgresql://user:password@localhost:5432/mysellguid"
-      }
+      "args": ["-y", "mcp-remote@latest", "https://mcp.neon.tech/mcp"]
     },
     "github": {
       "command": "npx",
