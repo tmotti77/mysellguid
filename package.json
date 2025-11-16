@@ -5,9 +5,7 @@
   "private": true,
   "workspaces": [
     "backend",
-    "mobile",
-    "web",
-    "shared"
+    "mobile"
   ],
   "scripts": {
     "backend": "cd backend && npm run start:dev",
