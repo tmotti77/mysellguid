@@ -9,20 +9,32 @@ import {
   Query,
   UseGuards,
   Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { SalesService } from './sales.service';
 import { SaleStatus } from './entities/sale.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { StoresService } from '../stores/stores.service';
 
 @ApiTags('Sales')
 @ApiBearerAuth('JWT-auth')
 @Controller('sales')
 export class SalesController {
-  constructor(private readonly salesService: SalesService) {}
+  constructor(
+    private readonly salesService: SalesService,
+    private readonly storesService: StoresService,
+  ) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Create a new sale' })
   async create(@Request() req, @Body() createSaleDto: any) {
+    // Verify user owns the store
+    const store = await this.storesService.findOne(createSaleDto.storeId);
+    if (store.ownerId !== req.user.id && req.user.role !== 'admin') {
+      throw new ForbiddenException('You can only create sales for your own stores');
+    }
     return this.salesService.create(createSaleDto);
   }
 
@@ -116,14 +128,28 @@ export class SalesController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Update sale' })
-  async update(@Param('id') id: string, @Body() updateSaleDto: any) {
+  async update(@Param('id') id: string, @Body() updateSaleDto: any, @Request() req) {
+    // Verify ownership through store
+    const sale = await this.salesService.findOne(id);
+    const store = await this.storesService.findOne(sale.storeId);
+    if (store.ownerId !== req.user.id && req.user.role !== 'admin') {
+      throw new ForbiddenException('You can only update sales for your own stores');
+    }
     return this.salesService.update(id, updateSaleDto);
   }
 
   @Patch(':id/status')
-  @ApiOperation({ summary: 'Update sale status' })
-  async updateStatus(@Param('id') id: string, @Body() body: { status: SaleStatus }) {
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Update sale status (store owner or admin)' })
+  async updateStatus(@Param('id') id: string, @Body() body: { status: SaleStatus }, @Request() req) {
+    // Verify ownership through store
+    const sale = await this.salesService.findOne(id);
+    const store = await this.storesService.findOne(sale.storeId);
+    if (store.ownerId !== req.user.id && req.user.role !== 'admin') {
+      throw new ForbiddenException('You can only update status for sales in your own stores');
+    }
     return this.salesService.updateStatus(id, body.status);
   }
 
@@ -149,8 +175,15 @@ export class SalesController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Delete sale' })
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string, @Request() req) {
+    // Verify ownership through store
+    const sale = await this.salesService.findOne(id);
+    const store = await this.storesService.findOne(sale.storeId);
+    if (store.ownerId !== req.user.id && req.user.role !== 'admin') {
+      throw new ForbiddenException('You can only delete sales for your own stores');
+    }
     return this.salesService.remove(id);
   }
 }

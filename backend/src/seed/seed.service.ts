@@ -86,6 +86,8 @@ export class SeedService {
         longitude: 34.9167442,
         phoneNumber: '+972-3-1234567',
         email: 'info@fashionparadise.com',
+        logo: 'https://images.unsplash.com/photo-1558769132-cb1aea672c11?w=200',
+        coverImage: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800',
         isVerified: true,
         rating: 4.5,
         reviewCount: 124,
@@ -101,6 +103,8 @@ export class SeedService {
         longitude: 34.9170,
         phoneNumber: '+972-3-2345678',
         email: 'contact@techzone.com',
+        logo: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=200',
+        coverImage: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800',
         isVerified: true,
         rating: 4.7,
         reviewCount: 89,
@@ -116,6 +120,8 @@ export class SeedService {
         longitude: 34.9160,
         phoneNumber: '+972-3-3456789',
         email: 'hello@homestyle.com',
+        logo: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=200',
+        coverImage: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800',
         isVerified: true,
         rating: 4.3,
         reviewCount: 67,
@@ -131,6 +137,8 @@ export class SeedService {
         longitude: 34.9175,
         phoneNumber: '+972-3-4567890',
         email: 'info@sportsworld.com',
+        logo: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=200',
+        coverImage: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800',
         isVerified: true,
         rating: 4.6,
         reviewCount: 156,
@@ -146,6 +154,8 @@ export class SeedService {
         longitude: 34.9165,
         phoneNumber: '+972-3-5678901',
         email: 'info@beautycorner.com',
+        logo: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=200',
+        coverImage: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800',
         isVerified: true,
         rating: 4.8,
         reviewCount: 203,
@@ -156,8 +166,8 @@ export class SeedService {
     for (const storeData of storesData) {
       // Use raw SQL to insert with PostGIS ST_SetSRID and ST_Point
       const result = await this.storesRepository.query(
-        `INSERT INTO stores (name, description, category, address, city, country, latitude, longitude, location, "phoneNumber", email, "isVerified", rating, "reviewCount", "ownerId")
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, ST_SetSRID(ST_Point($9, $10), 4326)::geography, $11, $12, $13, $14, $15, $16)
+        `INSERT INTO stores (name, description, category, address, city, country, latitude, longitude, location, "phoneNumber", email, logo, "coverImage", "isVerified", rating, "reviewCount", "ownerId")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, ST_SetSRID(ST_Point($9, $10), 4326)::geography, $11, $12, $13, $14, $15, $16, $17, $18)
          RETURNING *`,
         [
           storeData.name,
@@ -172,6 +182,8 @@ export class SeedService {
           storeData.latitude,
           storeData.phoneNumber,
           storeData.email,
+          storeData.logo,
+          storeData.coverImage,
           storeData.isVerified,
           storeData.rating,
           storeData.reviewCount,
@@ -200,7 +212,7 @@ export class SeedService {
         salePrice: 100,
         startDate: now,
         endDate: nextWeek,
-        images: ['https://images.unsplash.com/photo-1441986300917-64674bd600d8'],
+        images: ['https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800'],
         storeId: stores[0].id,
         latitude: stores[0].latitude,
         longitude: stores[0].longitude,
@@ -215,7 +227,7 @@ export class SeedService {
         salePrice: 105,
         startDate: now,
         endDate: nextMonth,
-        images: ['https://images.unsplash.com/photo-1595777457583-95e059d581b8'],
+        images: ['https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800'],
         storeId: stores[0].id,
         latitude: stores[0].latitude,
         longitude: stores[0].longitude,
@@ -231,7 +243,7 @@ export class SeedService {
         salePrice: 1800,
         startDate: now,
         endDate: nextWeek,
-        images: ['https://images.unsplash.com/photo-1511707171634-5f897ff02aa9'],
+        images: ['https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800'],
         storeId: stores[1].id,
         latitude: stores[1].latitude,
         longitude: stores[1].longitude,
@@ -246,7 +258,7 @@ export class SeedService {
         salePrice: 3000,
         startDate: now,
         endDate: nextMonth,
-        images: ['https://images.unsplash.com/photo-1517336714731-489689fd1ca8'],
+        images: ['https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800'],
         storeId: stores[1].id,
         latitude: stores[1].latitude,
         longitude: stores[1].longitude,
@@ -262,7 +274,7 @@ export class SeedService {
         salePrice: 2000,
         startDate: now,
         endDate: nextWeek,
-        images: ['https://images.unsplash.com/photo-1555041469-a586c61ea9bc'],
+        images: ['https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800'],
         storeId: stores[2].id,
         latitude: stores[2].latitude,
         longitude: stores[2].longitude,
@@ -277,7 +289,7 @@ export class SeedService {
         salePrice: 195,
         startDate: now,
         endDate: nextMonth,
-        images: ['https://images.unsplash.com/photo-1513694203232-719a280e022f'],
+        images: ['https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800'],
         storeId: stores[2].id,
         latitude: stores[2].latitude,
         longitude: stores[2].longitude,
@@ -293,7 +305,7 @@ export class SeedService {
         salePrice: 300,
         startDate: now,
         endDate: nextMonth,
-        images: ['https://images.unsplash.com/photo-1542291026-7eec264c27ff'],
+        images: ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800'],
         storeId: stores[3].id,
         latitude: stores[3].latitude,
         longitude: stores[3].longitude,
@@ -308,7 +320,7 @@ export class SeedService {
         salePrice: 825,
         startDate: now,
         endDate: nextWeek,
-        images: ['https://images.unsplash.com/photo-1517836357463-d25dfeac3438'],
+        images: ['https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800'],
         storeId: stores[3].id,
         latitude: stores[3].latitude,
         longitude: stores[3].longitude,
@@ -324,7 +336,7 @@ export class SeedService {
         salePrice: 150,
         startDate: now,
         endDate: nextWeek,
-        images: ['https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8'],
+        images: ['https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?w=800'],
         storeId: stores[4].id,
         latitude: stores[4].latitude,
         longitude: stores[4].longitude,
@@ -339,7 +351,7 @@ export class SeedService {
         salePrice: 120,
         startDate: now,
         endDate: nextMonth,
-        images: ['https://images.unsplash.com/photo-1512496015851-a90fb38ba796'],
+        images: ['https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=800'],
         storeId: stores[4].id,
         latitude: stores[4].latitude,
         longitude: stores[4].longitude,
@@ -350,6 +362,7 @@ export class SeedService {
     const sales = [];
     for (const saleData of salesData) {
       // Use raw SQL to insert with PostGIS ST_SetSRID and ST_Point
+      // Note: images must be comma-separated string for simple-array type
       const result = await this.salesRepository.query(
         `INSERT INTO sales (title, description, category, "discountPercentage", "originalPrice", "salePrice", currency, "startDate", "endDate", images, "storeId", latitude, longitude, location, status, source)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, ST_SetSRID(ST_Point($14, $15), 4326)::geography, $16, $17)
@@ -364,7 +377,7 @@ export class SeedService {
           'ILS',
           saleData.startDate,
           saleData.endDate,
-          saleData.images,
+          saleData.images.join(','), // Convert array to comma-separated string for simple-array type
           saleData.storeId,
           saleData.latitude,
           saleData.longitude,

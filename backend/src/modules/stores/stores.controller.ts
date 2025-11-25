@@ -9,9 +9,11 @@ import {
   Query,
   UseGuards,
   Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { StoresService } from './stores.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Stores')
 @ApiBearerAuth('JWT-auth')
@@ -20,6 +22,7 @@ export class StoresController {
   constructor(private readonly storesService: StoresService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Register a new store' })
   async create(@Request() req, @Body() createStoreDto: any) {
     return this.storesService.create({
@@ -63,6 +66,7 @@ export class StoresController {
   }
 
   @Get('my-stores')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get current user stores' })
   async getMyStores(@Request() req) {
     return this.storesService.findByOwner(req.user.id);
@@ -77,14 +81,26 @@ export class StoresController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Update store' })
-  async update(@Param('id') id: string, @Body() updateStoreDto: any) {
+  async update(@Param('id') id: string, @Body() updateStoreDto: any, @Request() req) {
+    // Check ownership
+    const store = await this.storesService.findOne(id);
+    if (store.ownerId !== req.user.id && req.user.role !== 'admin') {
+      throw new ForbiddenException('You can only update your own stores');
+    }
     return this.storesService.update(id, updateStoreDto);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Delete store' })
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string, @Request() req) {
+    // Check ownership
+    const store = await this.storesService.findOne(id);
+    if (store.ownerId !== req.user.id && req.user.role !== 'admin') {
+      throw new ForbiddenException('You can only delete your own stores');
+    }
     return this.storesService.remove(id);
   }
 }

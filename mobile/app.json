@@ -25,8 +25,16 @@
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
-        "ACCESS_BACKGROUND_LOCATION"
+        "ACCESS_BACKGROUND_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "NOTIFICATIONS"
       ]
+    },
+    "notification": {
+      "color": "#EF4444",
+      "androidMode": "default",
+      "androidCollapsedTitle": "{{unread_notifications}} new notifications"
     },
     "web": {},
     "plugins": [
@@ -34,6 +42,12 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow MySellGuid to use your location to show nearby sales."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#EF4444"
         }
       ]
     ],

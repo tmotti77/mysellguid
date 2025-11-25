@@ -28,7 +28,7 @@ Start-Sleep -Seconds 1
 Write-Host ""
 Write-Host "Step 3: Testing geospatial search..." -ForegroundColor Yellow
 try {
-    $salesUrl = "http://localhost:3000/api/sales/nearby?lat=32.0853&lng=34.7818&radius=5000"
+    $salesUrl = "http://localhost:3000/api/sales/nearby?lat=32.1544678&lng=34.9167442&radius=5000"
     $sales = Invoke-RestMethod -Uri $salesUrl
     Write-Host "SUCCESS: Found $($sales.Count) sales nearby!" -ForegroundColor Green
     if ($sales.Count -gt 0) {

@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { MainTabParamList } from '../types';
 import DiscoverNavigator from './DiscoverNavigator';
-import SearchScreen from '../screens/main/SearchScreen';
+import SearchNavigator from './SearchNavigator';
 import SavedScreen from '../screens/main/SavedScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
 
@@ -48,7 +48,7 @@ const MainNavigator = () => {
       />
       <Tab.Screen
         name="Search"
-        component={SearchScreen}
+        component={SearchNavigator}
         options={{ title: 'Search' }}
       />
       <Tab.Screen

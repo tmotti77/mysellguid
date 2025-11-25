@@ -8,11 +8,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Share,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { DiscoverStackParamList, Sale } from '../../types';
-import { salesService } from '../../services/api';
+import { salesService, bookmarksService } from '../../services/api';
 import { Ionicons } from '@expo/vector-icons';
 
 type SaleDetailScreenNavigationProp = StackNavigationProp<
@@ -30,9 +31,12 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const { saleId } = route.params;
   const [sale, setSale] = useState<Sale | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
   useEffect(() => {
     fetchSaleDetails();
+    checkBookmarkStatus();
   }, []);
 
   const fetchSaleDetails = async () => {
@@ -44,6 +48,61 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       Alert.alert('Error', 'Failed to load sale details');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkBookmarkStatus = async () => {
+    try {
+      const response = await bookmarksService.getAll();
+      const bookmarks = response.data.sales || [];
+      const isBookmarked = bookmarks.some((b: any) => b.sale?.id === saleId || b.saleId === saleId);
+      setIsBookmarked(isBookmarked);
+    } catch (error) {
+      console.error('Error checking bookmark status:', error);
+      // If 404 or auth error, just assume not bookmarked
+      setIsBookmarked(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (bookmarkLoading) return;
+
+    setBookmarkLoading(true);
+    try {
+      if (isBookmarked) {
+        await bookmarksService.remove(saleId);
+        setIsBookmarked(false);
+        Alert.alert('Success', 'Removed from saved sales');
+      } else {
+        await bookmarksService.add(saleId);
+        setIsBookmarked(true);
+        Alert.alert('Success', 'Sale saved successfully!');
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      Alert.alert('Error', 'Failed to save sale');
+    } finally {
+      setBookmarkLoading(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!sale) return;
+
+    try {
+      const message = `Check out this sale: ${sale.title} - ${sale.discountPercentage}% OFF at ${sale.store.name}!`;
+
+      await Share.share({
+        message: message,
+        title: sale.title,
+      });
+
+      // Track share analytics (fire and forget)
+      salesService.trackShare(saleId).catch(e => console.error('Failed to track share:', e));
+    } catch (error: any) {
+      if (error.message !== 'Share dismissed') {
+        console.error('Error sharing:', error);
+      }
     }
   };
 
@@ -66,11 +125,16 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   return (
     <ScrollView style={styles.container}>
       {/* Images */}
-      {sale.images && sale.images.length > 0 && (
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: sale.images[0] }} style={styles.image} />
-        </View>
-      )}
+      <View style={styles.imageContainer}>
+        <Image
+          source={{
+            uri: sale.images && sale.images.length > 0
+              ? sale.images[0]
+              : 'https://via.placeholder.com/400x300?text=No+Image'
+          }}
+          style={styles.image}
+        />
+      </View>
 
       {/* Content */}
       <View style={styles.content}>
@@ -126,13 +190,23 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.shareButton}>
+          <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
             <Ionicons name="share-social" size={20} color="#4F46E5" />
             <Text style={styles.shareButtonText}>Share</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.saveButton}>
-            <Ionicons name="bookmark" size={20} color="#FFFFFF" />
-            <Text style={styles.saveButtonText}>Save</Text>
+          <TouchableOpacity
+            style={[styles.saveButton, isBookmarked && styles.saveButtonActive]}
+            onPress={handleSave}
+            disabled={bookmarkLoading}
+          >
+            <Ionicons
+              name={isBookmarked ? "bookmark" : "bookmark-outline"}
+              size={20}
+              color="#FFFFFF"
+            />
+            <Text style={styles.saveButtonText}>
+              {bookmarkLoading ? 'Saving...' : (isBookmarked ? 'Saved' : 'Save')}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -278,6 +352,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#4F46E5',
     marginLeft: 8,
+  },
+  saveButtonActive: {
+    backgroundColor: '#10B981',
   },
   saveButtonText: {
     fontSize: 16,

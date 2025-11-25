@@ -72,10 +72,10 @@ export class Sale {
   currency: string;
 
   // Sale validity
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamptz' })
   startDate: Date;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamptz' })
   endDate: Date;
 
   @Column({

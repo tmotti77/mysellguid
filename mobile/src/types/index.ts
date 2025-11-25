@@ -28,6 +28,12 @@ export interface Store {
   address: string;
   city: string;
   country: string;
+  phoneNumber?: string;
+  email?: string;
+  website?: string;
+  instagramHandle?: string;
+  facebookPage?: string;
+  openingHours?: object;
   latitude: number;
   longitude: number;
   distance?: number;
@@ -80,6 +86,12 @@ export type MainTabParamList = {
 
 export type DiscoverStackParamList = {
   DiscoverHome: undefined;
+  SaleDetail: { saleId: string };
+  StoreDetail: { storeId: string };
+};
+
+export type SearchStackParamList = {
+  SearchHome: undefined;
   SaleDetail: { saleId: string };
   StoreDetail: { storeId: string };
 };

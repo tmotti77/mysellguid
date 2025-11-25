@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { StoresModule } from './modules/stores/stores.module';
@@ -10,6 +11,8 @@ import { ScrapingModule } from './modules/scraping/scraping.module';
 import { MlModule } from './modules/ml/ml.module';
 import { FirebaseModule } from './modules/firebase/firebase.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { UploadModule } from './modules/upload/upload.module';
+import { BookmarksModule } from './modules/bookmarks/bookmarks.module';
 import { SeedModule } from './seed/seed.module';
 
 @Module({
@@ -19,6 +22,12 @@ import { SeedModule } from './seed/seed.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+
+    // Rate Limiting
+    ThrottlerModule.forRoot([{
+      ttl: 60000, // 60 seconds
+      limit: 20, // 20 requests per 60 seconds (default for all endpoints)
+    }]),
 
     // Database - PostgreSQL with PostGIS
     TypeOrmModule.forRootAsync({
@@ -60,6 +69,8 @@ import { SeedModule } from './seed/seed.module';
     MlModule,
     FirebaseModule,
     NotificationsModule,
+    UploadModule,
+    BookmarksModule,
     SeedModule,
   ],
 })

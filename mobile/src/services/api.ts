@@ -78,8 +78,12 @@ export const salesService = {
 
   getById: (id: string) => api.get(`/sales/${id}`),
 
+  getByStore: (storeId: string) => api.get(`/sales/store/${storeId}`),
+
   search: (query: string, params?: { category?: string; minDiscount?: number }) =>
     api.get(`/sales/search?q=${query}`, { params }),
+
+  trackShare: (saleId: string) => api.post(`/sales/${saleId}/share`),
 };
 
 export const storesService = {
@@ -104,4 +108,17 @@ export const userService = {
 
   updateFcmToken: (fcmToken: string) =>
     api.patch('/users/me/fcm-token', { fcmToken }),
+};
+
+export const bookmarksService = {
+  getAll: (latitude?: number, longitude?: number) => {
+    const params = latitude && longitude ? { lat: latitude, lng: longitude } : {};
+    return api.get('/bookmarks', { params });
+  },
+
+  add: (saleId: string) => api.post(`/bookmarks/${saleId}`),
+
+  remove: (saleId: string) => api.delete(`/bookmarks/${saleId}`),
+
+  check: (saleId: string) => api.get(`/bookmarks/check/${saleId}`),
 };

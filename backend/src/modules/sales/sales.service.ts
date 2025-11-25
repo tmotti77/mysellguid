@@ -58,7 +58,16 @@ export class SalesService {
       query.skip(options.offset);
     }
 
-    return query.getMany();
+    const sales = await query.getMany();
+
+    // Fix: Convert simple-array strings to actual arrays
+    sales.forEach(sale => {
+      if (typeof sale.images === 'string') {
+        (sale as any).images = (sale.images as string).split(',');
+      }
+    });
+
+    return sales;
   }
 
   async findOne(id: string): Promise<Sale> {
@@ -69,6 +78,11 @@ export class SalesService {
 
     if (!sale) {
       throw new NotFoundException(`Sale with ID ${id} not found`);
+    }
+
+    // Fix: Convert simple-array string to actual array
+    if (typeof sale.images === 'string') {
+      (sale as any).images = (sale.images as string).split(',');
     }
 
     return sale;
@@ -89,7 +103,31 @@ export class SalesService {
     // Build PostGIS query for nearby sales
     let query = `
       SELECT
-        sale.*,
+        sale.id,
+        sale.title,
+        sale.description,
+        sale.category,
+        sale."discountPercentage",
+        sale."originalPrice",
+        sale."salePrice",
+        sale.currency,
+        sale."startDate",
+        sale."endDate",
+        sale.status,
+        string_to_array(sale.images, ',') as images,
+        sale."storeId",
+        sale.latitude,
+        sale.longitude,
+        sale.source,
+        sale."sourceUrl",
+        sale."sourceId",
+        sale."aiMetadata",
+        sale.views,
+        sale.clicks,
+        sale.shares,
+        sale.saves,
+        sale."createdAt",
+        sale."updatedAt",
         ST_Distance(
           sale.location::geography,
           ST_SetSRID(ST_Point($1, $2), 4326)::geography
@@ -117,9 +155,8 @@ export class SalesService {
     // Filter by active status
     if (activeOnly) {
       query += ` AND sale.status = 'active'`;
-      // TODO: Fix date comparison - temporarily disabled
-      // query += ` AND sale."startDate" <= NOW()`;
-      // query += ` AND sale."endDate" >= NOW()`;
+      query += ` AND sale."startDate" <= NOW()`;
+      query += ` AND sale."endDate" >= NOW()`;
     }
 
     // Filter by category
@@ -230,7 +267,16 @@ export class SalesService {
       query.take(options.limit);
     }
 
-    return query.orderBy('sale.discountPercentage', 'DESC').getMany();
+    const sales = await query.orderBy('sale.discountPercentage', 'DESC').getMany();
+
+    // Fix: Convert simple-array strings to actual arrays
+    sales.forEach(sale => {
+      if (typeof sale.images === 'string') {
+        (sale as any).images = (sale.images as string).split(',');
+      }
+    });
+
+    return sales;
   }
 
   async getStatistics(storeId?: string) {
