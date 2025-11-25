@@ -280,8 +280,8 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
             <Marker
               key={sale.id}
               coordinate={{
-                latitude: sale.latitude,
-                longitude: sale.longitude,
+                latitude: parseFloat(sale.latitude),
+                longitude: parseFloat(sale.longitude),
               }}
               onPress={() => navigation.navigate('SaleDetail', { saleId: sale.id })}
             >
