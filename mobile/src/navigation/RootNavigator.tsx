@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useAuth } from '../context/AuthContext';
+import { userService } from '../services/api';
+import { registerForPushNotificationsAsync } from '../services/notifications';
 import { RootStackParamList } from '../types';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
@@ -10,6 +12,16 @@ const Stack = createStackNavigator<RootStackParamList>();
 
 const RootNavigator = () => {
   const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      registerForPushNotificationsAsync().then(token => {
+        if (token) {
+          userService.updateFcmToken(token).catch(err => console.error('Failed to update FCM token:', err));
+        }
+      });
+    }
+  }, [user]);
 
   if (loading) {
     return (

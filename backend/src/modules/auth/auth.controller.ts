@@ -20,7 +20,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
-  @Throttle({ default: { limit: 3, ttl: 60000 } }) // Stricter: 3 registrations per 60 seconds
+  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 attempts per hour
   @ApiOperation({ summary: 'Register a new user' })
   async register(
     @Body()
@@ -37,7 +37,7 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // Stricter: 5 attempts per 60 seconds
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 attempts per minute
   @ApiOperation({ summary: 'Login with email and password' })
   async login(@Request() req) {
     return this.authService.login(req.user);

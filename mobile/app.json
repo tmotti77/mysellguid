@@ -29,7 +29,12 @@
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
         "NOTIFICATIONS"
-      ]
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyD9BLNnimK__WAR-hgAAnUeCEplCUPeASE"
+        }
+      }
     },
     "notification": {
       "color": "#EF4444",

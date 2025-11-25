@@ -9,33 +9,37 @@ import {
   Query,
   UseGuards,
   Request,
-  ForbiddenException,
+  ValidationPipe,
+  UsePipes,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { SalesService } from './sales.service';
 import { SaleStatus } from './entities/sale.entity';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { StoresService } from '../stores/stores.service';
+import { SaleOwnerGuard } from './guards/sale-owner.guard';
+import { CreateSaleDto } from './dto/create-sale.dto';
+import { UpdateSaleDto } from './dto/update-sale.dto';
 
 @ApiTags('Sales')
 @ApiBearerAuth('JWT-auth')
 @Controller('sales')
 export class SalesController {
-  constructor(
-    private readonly salesService: SalesService,
-    private readonly storesService: StoresService,
-  ) {}
+  constructor(private readonly salesService: SalesService) { }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Create a new sale' })
-  async create(@Request() req, @Body() createSaleDto: any) {
-    // Verify user owns the store
-    const store = await this.storesService.findOne(createSaleDto.storeId);
-    if (store.ownerId !== req.user.id && req.user.role !== 'admin') {
-      throw new ForbiddenException('You can only create sales for your own stores');
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
+  async create(@Request() req, @Body() createSaleDto: CreateSaleDto) {
+    const saleData: Partial<any> = { ...createSaleDto };
+
+    if (createSaleDto.startDate) {
+      saleData.startDate = new Date(createSaleDto.startDate);
     }
-    return this.salesService.create(createSaleDto);
+
+    if (createSaleDto.endDate) {
+      saleData.endDate = new Date(createSaleDto.endDate);
+    }
+
+    return this.salesService.create(saleData);
   }
 
   @Get()
@@ -115,8 +119,12 @@ export class SalesController {
 
   @Get('store/:storeId')
   @ApiOperation({ summary: 'Get all sales for a store' })
-  async findByStore(@Param('storeId') storeId: string) {
-    return this.salesService.findByStore(storeId);
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async findByStore(
+    @Param('storeId') storeId: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.salesService.findByStore(storeId, limit ? Number(limit) : undefined);
   }
 
   @Get(':id')
@@ -128,28 +136,27 @@ export class SalesController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Update sale' })
-  async update(@Param('id') id: string, @Body() updateSaleDto: any, @Request() req) {
-    // Verify ownership through store
-    const sale = await this.salesService.findOne(id);
-    const store = await this.storesService.findOne(sale.storeId);
-    if (store.ownerId !== req.user.id && req.user.role !== 'admin') {
-      throw new ForbiddenException('You can only update sales for your own stores');
+  @UseGuards(SaleOwnerGuard)
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
+  async update(@Param('id') id: string, @Body() updateSaleDto: UpdateSaleDto) {
+    const updateData: Partial<any> = { ...updateSaleDto };
+
+    if (updateSaleDto.startDate) {
+      updateData.startDate = new Date(updateSaleDto.startDate);
     }
-    return this.salesService.update(id, updateSaleDto);
+
+    if (updateSaleDto.endDate) {
+      updateData.endDate = new Date(updateSaleDto.endDate);
+    }
+
+    return this.salesService.update(id, updateData);
   }
 
   @Patch(':id/status')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Update sale status (store owner or admin)' })
-  async updateStatus(@Param('id') id: string, @Body() body: { status: SaleStatus }, @Request() req) {
-    // Verify ownership through store
-    const sale = await this.salesService.findOne(id);
-    const store = await this.storesService.findOne(sale.storeId);
-    if (store.ownerId !== req.user.id && req.user.role !== 'admin') {
-      throw new ForbiddenException('You can only update status for sales in your own stores');
-    }
+  @ApiOperation({ summary: 'Update sale status' })
+  @UseGuards(SaleOwnerGuard)
+  async updateStatus(@Param('id') id: string, @Body() body: { status: SaleStatus }) {
     return this.salesService.updateStatus(id, body.status);
   }
 
@@ -175,15 +182,9 @@ export class SalesController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Delete sale' })
-  async remove(@Param('id') id: string, @Request() req) {
-    // Verify ownership through store
-    const sale = await this.salesService.findOne(id);
-    const store = await this.storesService.findOne(sale.storeId);
-    if (store.ownerId !== req.user.id && req.user.role !== 'admin') {
-      throw new ForbiddenException('You can only delete sales for your own stores');
-    }
+  @UseGuards(SaleOwnerGuard)
+  async remove(@Param('id') id: string) {
     return this.salesService.remove(id);
   }
 }

@@ -29,6 +29,11 @@ async function bootstrap() {
   // Set global prefix
   app.setGlobalPrefix(apiPrefix);
 
+  // Serve static files (for local storage)
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
+  });
+
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
@@ -65,6 +70,7 @@ async function bootstrap() {
     .addTag('Stores', 'Store management and dashboard')
     .addTag('Sales', 'Sales discovery and management')
     .addTag('Notifications', 'Push notifications')
+    .addTag('Upload', 'File upload endpoints')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
