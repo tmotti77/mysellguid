@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 
-const API_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:3000/api';
+const API_URL = Constants.expoConfig?.extra?.apiUrl || 'http://192.168.1.37:3000/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -70,8 +70,8 @@ export const authService = {
 };
 
 export const salesService = {
-  getNearby: (latitude: number, longitude: number, radius: number = 5000) =>
-    api.get(`/sales/nearby?lat=${latitude}&lng=${longitude}&radius=${radius}`),
+  getNearby: (latitude: number, longitude: number, radius: number = 5000, category?: string) =>
+    api.get('/sales/nearby', { params: { lat: latitude, lng: longitude, radius, category } }),
 
   getAll: (params?: { category?: string; limit?: number; offset?: number }) =>
     api.get('/sales', { params }),
@@ -80,6 +80,14 @@ export const salesService = {
 
   search: (query: string, params?: { category?: string; minDiscount?: number }) =>
     api.get(`/sales/search?q=${query}`, { params }),
+
+  getByStoreId: (storeId: string) => api.get(`/sales/store/${storeId}`),
+
+  trackClick: (id: string) => api.post(`/sales/${id}/click`),
+
+  trackShare: (id: string) => api.post(`/sales/${id}/share`),
+
+  trackSave: (id: string) => api.post(`/sales/${id}/save`),
 };
 
 export const storesService = {
@@ -104,4 +112,16 @@ export const userService = {
 
   updateFcmToken: (fcmToken: string) =>
     api.patch('/users/me/fcm-token', { fcmToken }),
+
+  // Saved Sales
+  getSavedSales: (limit?: number, offset?: number) =>
+    api.get('/users/me/saved-sales', { params: { limit, offset } }),
+
+  saveSale: (saleId: string, metadata?: any) =>
+    api.post(`/users/me/saved-sales/${saleId}`, { metadata }),
+
+  unsaveSale: (saleId: string) => api.delete(`/users/me/saved-sales/${saleId}`),
+  checkSaleSaved: (saleId: string) => api.get(`/users/me/saved-sales/${saleId}/check`),
+  getSavedSalesCount: () => api.get('/users/me/saved-sales/count'),
 };
+

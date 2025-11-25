@@ -8,11 +8,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Share,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { DiscoverStackParamList, Sale } from '../../types';
-import { salesService } from '../../services/api';
+import { salesService, userService } from '../../services/api';
 import { Ionicons } from '@expo/vector-icons';
 
 type SaleDetailScreenNavigationProp = StackNavigationProp<
@@ -30,9 +31,12 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const { saleId } = route.params;
   const [sale, setSale] = useState<Sale | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savingInProgress, setSavingInProgress] = useState(false);
 
   useEffect(() => {
     fetchSaleDetails();
+    checkIfSaved();
   }, []);
 
   const fetchSaleDetails = async () => {
@@ -44,6 +48,55 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       Alert.alert('Error', 'Failed to load sale details');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkIfSaved = async () => {
+    try {
+      const response = await userService.checkSaleSaved(saleId);
+      setIsSaved(response.data.isSaved);
+    } catch (error) {
+      console.error('Error checking if saved:', error);
+    }
+  };
+
+  const handleSave = async () => {
+    if (savingInProgress) return;
+
+    setSavingInProgress(true);
+    try {
+      if (isSaved) {
+        await userService.unsaveSale(saleId);
+        setIsSaved(false);
+        Alert.alert('Removed', 'Sale removed from your saved items');
+      } else {
+        await userService.saveSale(saleId);
+        setIsSaved(true);
+        Alert.alert('Saved!', 'Sale added to your saved items');
+      }
+    } catch (error: any) {
+      console.error('Error saving sale:', error);
+      Alert.alert('Error', error.response?.data?.message || 'Failed to save sale');
+    } finally {
+      setSavingInProgress(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!sale) return;
+
+    try {
+      const result = await Share.share({
+        message: `Check out this sale: ${sale.title} at ${sale.store.name}!\n${sale.discountPercentage}% OFF`,
+        title: sale.title,
+      });
+
+      if (result.action === Share.sharedAction) {
+        // Track share event
+        await salesService.trackShare(saleId);
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
     }
   };
 
@@ -126,13 +179,23 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.shareButton}>
+          <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
             <Ionicons name="share-social" size={20} color="#4F46E5" />
             <Text style={styles.shareButtonText}>Share</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.saveButton}>
-            <Ionicons name="bookmark" size={20} color="#FFFFFF" />
-            <Text style={styles.saveButtonText}>Save</Text>
+          <TouchableOpacity
+            style={[styles.saveButton, isSaved && styles.savedButton]}
+            onPress={handleSave}
+            disabled={savingInProgress}
+          >
+            <Ionicons
+              name={isSaved ? "bookmark" : "bookmark-outline"}
+              size={20}
+              color="#FFFFFF"
+            />
+            <Text style={styles.saveButtonText}>
+              {isSaved ? 'Saved' : 'Save'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -278,6 +341,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#4F46E5',
     marginLeft: 8,
+  },
+  savedButton: {
+    backgroundColor: '#10B981',
   },
   saveButtonText: {
     fontSize: 16,

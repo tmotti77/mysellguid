@@ -34,6 +34,7 @@ export interface Store {
   rating: number;
   reviewCount: number;
   isVerified: boolean;
+  phoneNumber?: string;
 }
 
 export interface Sale {
@@ -82,4 +83,10 @@ export type DiscoverStackParamList = {
   DiscoverHome: undefined;
   SaleDetail: { saleId: string };
   StoreDetail: { storeId: string };
+};
+
+export type ProfileStackParamList = {
+  ProfileHome: undefined;
+  EditProfile: undefined;
+  Preferences: undefined;
 };

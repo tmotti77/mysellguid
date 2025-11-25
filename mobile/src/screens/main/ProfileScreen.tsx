@@ -10,7 +10,16 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 
-const ProfileScreen = () => {
+import { StackNavigationProp } from '@react-navigation/stack';
+import { ProfileStackParamList } from '../../types';
+
+type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'ProfileHome'>;
+
+interface Props {
+  navigation: ProfileScreenNavigationProp;
+}
+
+const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { user, signOut } = useAuth();
 
   const handleLogout = () => {
@@ -54,7 +63,10 @@ const ProfileScreen = () => {
 
         {/* Menu Items */}
         <View style={styles.section}>
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
             <Ionicons name="person-outline" size={24} color="#374151" />
             <Text style={styles.menuText}>Edit Profile</Text>
             <Ionicons name="chevron-forward" size={24} color="#9CA3AF" />

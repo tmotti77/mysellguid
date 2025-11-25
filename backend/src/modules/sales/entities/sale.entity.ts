@@ -11,10 +11,12 @@ import {
 import { Store } from '../../stores/entities/store.entity';
 
 export enum SaleCategory {
+  FASHION = 'fashion',
   CLOTHING = 'clothing',
   SHOES = 'shoes',
   ACCESSORIES = 'accessories',
   ELECTRONICS = 'electronics',
+  HOME = 'home',
   HOME_GOODS = 'home_goods',
   FURNITURE = 'furniture',
   BEAUTY = 'beauty',
@@ -72,10 +74,10 @@ export class Sale {
   currency: string;
 
   // Sale validity
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamp', nullable: true })
   startDate: Date;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamp', nullable: true })
   endDate: Date;
 
   @Column({

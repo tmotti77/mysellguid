@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 import { Sale, SaleStatus } from './entities/sale.entity';
+import { UploadService } from '../upload/upload.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 export interface NearbySearchOptions {
   latitude: number;
@@ -19,7 +21,9 @@ export class SalesService {
   constructor(
     @InjectRepository(Sale)
     private salesRepository: Repository<Sale>,
-  ) {}
+    private uploadService: UploadService,
+    private notificationsService: NotificationsService,
+  ) { }
 
   async create(saleData: Partial<Sale>): Promise<Sale> {
     // Create PostGIS POINT from latitude and longitude
@@ -28,7 +32,25 @@ export class SalesService {
     }
 
     const sale = this.salesRepository.create(saleData);
-    return this.salesRepository.save(sale);
+    const savedSale = await this.salesRepository.save(sale);
+
+    // Trigger notification asynchronously
+    this.findOne(savedSale.id).then(fullSale => {
+      if (fullSale && fullSale.store) {
+        this.notificationsService.notifyNewSale(
+          fullSale.title,
+          fullSale.store.name,
+          fullSale.category,
+          fullSale.id,
+          fullSale.latitude,
+          fullSale.longitude,
+          10000, // 10km radius
+          fullSale.discountPercentage
+        ).catch(err => console.error('Failed to send notification:', err));
+      }
+    }).catch(err => console.error('Failed to fetch sale for notification:', err));
+
+    return savedSale;
   }
 
   async findAll(options?: {
@@ -143,10 +165,11 @@ export class SalesService {
     return this.salesRepository.query(query, params);
   }
 
-  async findByStore(storeId: string): Promise<Sale[]> {
+  async findByStore(storeId: string, limit?: number): Promise<Sale[]> {
     return this.salesRepository.find({
       where: { storeId },
       order: { createdAt: 'DESC' },
+      take: limit,
     });
   }
 
@@ -158,12 +181,33 @@ export class SalesService {
       updateData.location = `POINT(${updateData.longitude} ${updateData.latitude})`;
     }
 
+    // Delete old images if new ones are provided
+    if (updateData.images && updateData.images.length > 0) {
+      // Delete old images that are no longer in the new list
+      const oldImages = sale.images || [];
+      const newImages = updateData.images;
+      const imagesToDelete = oldImages.filter((img) => !newImages.includes(img));
+
+      // Delete images in parallel
+      await Promise.allSettled(
+        imagesToDelete.map((url) => this.uploadService.deleteImage(url)),
+      );
+    }
+
     Object.assign(sale, updateData);
     return this.salesRepository.save(sale);
   }
 
   async remove(id: string): Promise<void> {
     const sale = await this.findOne(id);
+
+    // Delete all images associated with this sale
+    if (sale.images && sale.images.length > 0) {
+      await Promise.allSettled(
+        sale.images.map((url) => this.uploadService.deleteImage(url)),
+      );
+    }
+
     await this.salesRepository.remove(sale);
   }
 

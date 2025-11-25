@@ -32,7 +32,12 @@
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION"
-      ]
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyD9BLNnimK__WAR-hgAAnUeCEplCUPeASE"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -46,7 +51,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "http://localhost:3000/api"
+      "apiUrl": "http://192.168.1.37:3000/api"
     }
   }
 }

@@ -11,10 +11,19 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
+export interface GeoJSONPoint {
+  type: 'Point';
+  coordinates: [number, number];
+}
+
 export enum StoreCategory {
   FASHION = 'fashion',
+  CLOTHING = 'clothing',
+  SHOES = 'shoes',
+  ACCESSORIES = 'accessories',
   ELECTRONICS = 'electronics',
   HOME = 'home',
+  FURNITURE = 'furniture',
   FOOD = 'food',
   BEAUTY = 'beauty',
   SPORTS = 'sports',
@@ -76,14 +85,14 @@ export class Store {
   @Column({ default: 'Israel' })
   country: string;
 
-  // Geospatial - using PostGIS POINT type
+  // Geospatial - using PostGIS POINT type (stored as WKT string)
   @Index({ spatial: true })
   @Column({
     type: 'geography',
     spatialFeatureType: 'Point',
     srid: 4326,
   })
-  location: string; // Stored as WKT: POINT(longitude latitude)
+  location: string; // WKT format: "POINT(lng lat)"
 
   @Column({ type: 'decimal', precision: 10, scale: 7 })
   latitude: number;

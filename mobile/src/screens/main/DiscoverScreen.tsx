@@ -8,8 +8,10 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  ScrollView,
+  TextInput,
 } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE, Callout } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { salesService } from '../../services/api';
@@ -33,16 +35,28 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [radius, setRadius] = useState(5000); // 5km default
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const categories = [
+    { id: null, label: 'All' },
+    { id: 'clothing', label: 'Fashion' },
+    { id: 'electronics', label: 'Electronics' },
+    { id: 'home_goods', label: 'Home' },
+    { id: 'beauty', label: 'Beauty' },
+    { id: 'sports', label: 'Sports' },
+    { id: 'food', label: 'Food' },
+  ];
 
   useEffect(() => {
     requestLocationPermission();
   }, []);
 
   useEffect(() => {
-    if (location) {
-      fetchNearbySales();
+    if (location || searchQuery) {
+      fetchSales();
     }
-  }, [location, radius]);
+  }, [location, radius, selectedCategory, searchQuery]);
 
   const requestLocationPermission = async () => {
     try {
@@ -60,19 +74,30 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const fetchNearbySales = async () => {
-    if (!location) return;
+  const fetchSales = async () => {
+    if (!location && !searchQuery) return;
 
     try {
-      const response = await salesService.getNearby(
-        location.coords.latitude,
-        location.coords.longitude,
-        radius
-      );
-      setSales(response.data);
+      let response;
+      if (searchQuery) {
+        response = await salesService.search(searchQuery, {
+          category: selectedCategory || undefined,
+        });
+      } else if (location) {
+        response = await salesService.getNearby(
+          location.coords.latitude,
+          location.coords.longitude,
+          radius,
+          selectedCategory || undefined
+        );
+      }
+
+      if (response) {
+        setSales(response.data);
+      }
     } catch (error) {
       console.error('Error fetching sales:', error);
-      Alert.alert('Error', 'Failed to load nearby sales');
+      // Silent error for search typing
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -81,7 +106,7 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchNearbySales();
+    fetchSales();
   };
 
   const renderSaleCard = ({ item }: { item: Sale }) => (
@@ -135,7 +160,7 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
     );
   }
 
-  if (!location) {
+  if (!location && !searchQuery) {
     return (
       <View style={styles.errorContainer}>
         <Ionicons name="location-outline" size={64} color="#6B7280" />
@@ -154,32 +179,100 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Discover</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}
-          >
-            <Ionicons
-              name={viewMode === 'map' ? 'list' : 'map'}
-              size={24}
-              color="#111827"
-            />
-          </TouchableOpacity>
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#6B7280" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search sales..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            onSubmitEditing={fetchSales}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+          )}
         </View>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}
+        >
+          <Ionicons
+            name={viewMode === 'map' ? 'list' : 'map'}
+            size={24}
+            color="#111827"
+          />
+        </TouchableOpacity>
       </View>
+
+      {/* Category Filter */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoryContainer}
+        contentContainerStyle={styles.categoryContent}
+      >
+        {categories.map((category) => (
+          <TouchableOpacity
+            key={category.id || 'all'}
+            style={[
+              styles.categoryChip,
+              selectedCategory === category.id && styles.categoryChipActive,
+            ]}
+            onPress={() => setSelectedCategory(category.id)}
+          >
+            <Text
+              style={[
+                styles.categoryChipText,
+                selectedCategory === category.id && styles.categoryChipTextActive,
+              ]}
+            >
+              {category.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* Radius Selector */}
+      {!searchQuery && (
+        <View style={styles.radiusContainer}>
+          <View style={styles.radiusButtons}>
+            {[1000, 5000, 10000, 20000].map((r) => (
+              <TouchableOpacity
+                key={r}
+                style={[
+                  styles.radiusButton,
+                  radius === r && styles.radiusButtonActive,
+                ]}
+                onPress={() => setRadius(r)}
+              >
+                <Text
+                  style={[
+                    styles.radiusButtonText,
+                    radius === r && styles.radiusButtonTextActive,
+                  ]}
+                >
+                  {r < 1000 ? `${r}m` : `${r / 1000}km`}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
 
       {/* View Mode Toggle */}
       {viewMode === 'map' ? (
         <MapView
           style={styles.map}
           provider={PROVIDER_GOOGLE}
-          initialRegion={{
+          initialRegion={location ? {
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
             latitudeDelta: 0.05,
             longitudeDelta: 0.05,
-          }}
+          } : undefined}
           showsUserLocation
           showsMyLocationButton
         >
@@ -197,6 +290,14 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
                   <Ionicons name="pricetag" size={20} color="#FFFFFF" />
                 </View>
               </View>
+              <Callout onPress={() => navigation.navigate('SaleDetail', { saleId: sale.id })}>
+                <View style={styles.calloutContainer}>
+                  <Text style={styles.calloutTitle}>{sale.title}</Text>
+                  <Text style={styles.calloutStore}>{sale.store.name}</Text>
+                  <Text style={styles.calloutDiscount}>{sale.discountPercentage}% OFF</Text>
+                  <Text style={styles.calloutButton}>Tap to view</Text>
+                </View>
+              </Callout>
             </Marker>
           ))}
         </MapView>
@@ -219,31 +320,7 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
         />
       )}
 
-      {/* Radius Selector */}
-      <View style={styles.radiusContainer}>
-        <Text style={styles.radiusLabel}>Search Radius: {radius / 1000}km</Text>
-        <View style={styles.radiusButtons}>
-          {[1000, 5000, 10000, 20000].map((r) => (
-            <TouchableOpacity
-              key={r}
-              style={[
-                styles.radiusButton,
-                radius === r && styles.radiusButtonActive,
-              ]}
-              onPress={() => setRadius(r)}
-            >
-              <Text
-                style={[
-                  styles.radiusButtonText,
-                  radius === r && styles.radiusButtonTextActive,
-                ]}
-              >
-                {r / 1000}km
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
+
 
       {/* Sale Count */}
       <View style={styles.countBadge}>
@@ -260,24 +337,61 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
+    paddingTop: 50, // Status bar padding
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  headerActions: {
+  searchContainer: {
+    flex: 1,
     flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 12,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#111827',
+    padding: 0,
   },
   iconButton: {
     padding: 8,
-    marginLeft: 8,
+  },
+  categoryContainer: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  categoryContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  categoryChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    marginRight: 8,
+  },
+  categoryChipActive: {
+    backgroundColor: '#4F46E5',
+  },
+  categoryChipText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  categoryChipTextActive: {
+    color: '#FFFFFF',
   },
   map: {
     flex: 1,
@@ -291,6 +405,31 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 3,
     borderColor: '#FFFFFF',
+  },
+  calloutContainer: {
+    width: 200,
+    padding: 8,
+  },
+  calloutTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  calloutStore: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  calloutDiscount: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#DC2626',
+    marginBottom: 4,
+  },
+  calloutButton: {
+    fontSize: 12,
+    color: '#4F46E5',
+    marginTop: 4,
   },
   listContent: {
     padding: 16,
@@ -367,18 +506,11 @@ const styles = StyleSheet.create({
     color: '#10B981',
   },
   radiusContainer: {
-    position: 'absolute',
-    top: 80,
-    left: 16,
-    right: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
   radiusLabel: {
     fontSize: 12,
@@ -392,18 +524,21 @@ const styles = StyleSheet.create({
   },
   radiusButton: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 6,
     marginHorizontal: 4,
     backgroundColor: '#F3F4F6',
-    borderRadius: 8,
+    borderRadius: 16,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   radiusButtonActive: {
     backgroundColor: '#4F46E5',
+    borderColor: '#4F46E5',
   },
   radiusButtonText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#6B7280',
   },
   radiusButtonTextActive: {

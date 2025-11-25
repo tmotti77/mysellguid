@@ -2,10 +2,12 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Get config service
   const configService = app.get(ConfigService);
@@ -21,6 +23,11 @@ async function bootstrap() {
 
   // Set global prefix
   app.setGlobalPrefix(apiPrefix);
+
+  // Serve static files (for local storage)
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
+  });
 
   // Global validation pipe
   app.useGlobalPipes(
@@ -55,6 +62,7 @@ async function bootstrap() {
     .addTag('Stores', 'Store management and dashboard')
     .addTag('Sales', 'Sales discovery and management')
     .addTag('Notifications', 'Push notifications')
+    .addTag('Upload', 'File upload endpoints')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

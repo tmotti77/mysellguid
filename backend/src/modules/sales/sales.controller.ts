@@ -9,21 +9,37 @@ import {
   Query,
   UseGuards,
   Request,
+  ValidationPipe,
+  UsePipes,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { SalesService } from './sales.service';
 import { SaleStatus } from './entities/sale.entity';
+import { SaleOwnerGuard } from './guards/sale-owner.guard';
+import { CreateSaleDto } from './dto/create-sale.dto';
+import { UpdateSaleDto } from './dto/update-sale.dto';
 
 @ApiTags('Sales')
 @ApiBearerAuth('JWT-auth')
 @Controller('sales')
 export class SalesController {
-  constructor(private readonly salesService: SalesService) {}
+  constructor(private readonly salesService: SalesService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create a new sale' })
-  async create(@Request() req, @Body() createSaleDto: any) {
-    return this.salesService.create(createSaleDto);
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
+  async create(@Request() req, @Body() createSaleDto: CreateSaleDto) {
+    const saleData: Partial<any> = { ...createSaleDto };
+
+    if (createSaleDto.startDate) {
+      saleData.startDate = new Date(createSaleDto.startDate);
+    }
+
+    if (createSaleDto.endDate) {
+      saleData.endDate = new Date(createSaleDto.endDate);
+    }
+
+    return this.salesService.create(saleData);
   }
 
   @Get()
@@ -103,8 +119,12 @@ export class SalesController {
 
   @Get('store/:storeId')
   @ApiOperation({ summary: 'Get all sales for a store' })
-  async findByStore(@Param('storeId') storeId: string) {
-    return this.salesService.findByStore(storeId);
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async findByStore(
+    @Param('storeId') storeId: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.salesService.findByStore(storeId, limit ? Number(limit) : undefined);
   }
 
   @Get(':id')
@@ -117,12 +137,25 @@ export class SalesController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update sale' })
-  async update(@Param('id') id: string, @Body() updateSaleDto: any) {
-    return this.salesService.update(id, updateSaleDto);
+  @UseGuards(SaleOwnerGuard)
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
+  async update(@Param('id') id: string, @Body() updateSaleDto: UpdateSaleDto) {
+    const updateData: Partial<any> = { ...updateSaleDto };
+
+    if (updateSaleDto.startDate) {
+      updateData.startDate = new Date(updateSaleDto.startDate);
+    }
+
+    if (updateSaleDto.endDate) {
+      updateData.endDate = new Date(updateSaleDto.endDate);
+    }
+
+    return this.salesService.update(id, updateData);
   }
 
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update sale status' })
+  @UseGuards(SaleOwnerGuard)
   async updateStatus(@Param('id') id: string, @Body() body: { status: SaleStatus }) {
     return this.salesService.updateStatus(id, body.status);
   }
@@ -150,6 +183,7 @@ export class SalesController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete sale' })
+  @UseGuards(SaleOwnerGuard)
   async remove(@Param('id') id: string) {
     return this.salesService.remove(id);
   }
