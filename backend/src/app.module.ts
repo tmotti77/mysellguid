@@ -43,11 +43,13 @@ import { User } from './modules/users/entities/user.entity';
         
         // If DATABASE_URL is provided (Render, Railway, etc.), use it
         if (databaseUrl) {
+          // Allow one-time sync via SYNC_DATABASE=true env var for initial setup
+          const allowSync = configService.get('SYNC_DATABASE') === 'true';
           return {
             type: 'postgres',
             url: databaseUrl,
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
-            synchronize: false, // Never sync in production
+            synchronize: allowSync, // Set SYNC_DATABASE=true for initial setup only!
             logging: !isProduction,
             ssl: isProduction ? { rejectUnauthorized: false } : false,
             extra: isProduction ? { ssl: { rejectUnauthorized: false } } : {},
