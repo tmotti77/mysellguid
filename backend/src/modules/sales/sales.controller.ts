@@ -23,7 +23,7 @@ import { UpdateSaleDto } from './dto/update-sale.dto';
 @ApiBearerAuth('JWT-auth')
 @Controller('sales')
 export class SalesController {
-  constructor(private readonly salesService: SalesService) { }
+  constructor(private readonly salesService: SalesService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new sale' })
@@ -66,7 +66,12 @@ export class SalesController {
   @ApiOperation({ summary: 'Find sales nearby (geospatial search)' })
   @ApiQuery({ name: 'lat', required: true, type: Number, description: 'Latitude' })
   @ApiQuery({ name: 'lng', required: true, type: Number, description: 'Longitude' })
-  @ApiQuery({ name: 'radius', required: false, type: Number, description: 'Search radius in meters (default: 5000)' })
+  @ApiQuery({
+    name: 'radius',
+    required: false,
+    type: Number,
+    description: 'Search radius in meters (default: 5000)',
+  })
   @ApiQuery({ name: 'category', required: false })
   @ApiQuery({ name: 'minDiscount', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -120,10 +125,7 @@ export class SalesController {
   @Get('store/:storeId')
   @ApiOperation({ summary: 'Get all sales for a store' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  async findByStore(
-    @Param('storeId') storeId: string,
-    @Query('limit') limit?: number,
-  ) {
+  async findByStore(@Param('storeId') storeId: string, @Query('limit') limit?: number) {
     return this.salesService.findByStore(storeId, limit ? Number(limit) : undefined);
   }
 

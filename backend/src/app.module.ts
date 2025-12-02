@@ -15,6 +15,8 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { UploadModule } from './modules/upload/upload.module';
 import { BookmarksModule } from './modules/bookmarks/bookmarks.module';
 import { SeedModule } from './seed/seed.module';
+import { HealthController } from './health.controller';
+import { User } from './modules/users/entities/user.entity';
 
 @Module({
   imports: [
@@ -75,7 +77,11 @@ import { SeedModule } from './seed/seed.module';
     UploadModule,
     BookmarksModule,
     SeedModule,
+
+    // TypeORM for health check
+    TypeOrmModule.forFeature([User]),
   ],
+  controllers: [HealthController],
   providers: [
     // Apply throttler globally
     {

@@ -1,4 +1,16 @@
-import { IsString, IsOptional, IsNumber, Min, Max, IsEnum, IsArray, IsDateString, IsUUID, Length, IsUrl } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  Min,
+  Max,
+  IsEnum,
+  IsArray,
+  IsDateString,
+  IsUUID,
+  Length,
+  IsUrl,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SaleCategory, SaleSource, SaleStatus } from '../entities/sale.entity';
 
@@ -58,7 +70,10 @@ export class CreateSaleDto {
   @IsOptional()
   status?: SaleStatus;
 
-  @ApiPropertyOptional({ description: 'Array of image URLs', example: ['https://example.com/image.jpg'] })
+  @ApiPropertyOptional({
+    description: 'Array of image URLs',
+    example: ['https://example.com/image.jpg'],
+  })
   @IsArray()
   @IsUrl({}, { each: true })
   @IsOptional()

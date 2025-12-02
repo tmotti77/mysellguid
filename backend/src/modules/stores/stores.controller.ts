@@ -38,12 +38,19 @@ export class StoresController {
 
   @Get()
   @ApiOperation({ summary: 'Get all stores' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max items per page (default: 20, max: 100)' })
-  @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Number of items to skip (default: 0)' })
-  async findAll(
-    @Query('limit') limit: number = 20,
-    @Query('offset') offset: number = 0,
-  ) {
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Max items per page (default: 20, max: 100)',
+  })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    type: Number,
+    description: 'Number of items to skip (default: 0)',
+  })
+  async findAll(@Query('limit') limit: number = 20, @Query('offset') offset: number = 0) {
     const safeLimit = Math.min(Number(limit), 100); // Enforce max limit
     const safeOffset = Math.max(Number(offset), 0); // Ensure non-negative
 
@@ -54,27 +61,25 @@ export class StoresController {
   @ApiOperation({ summary: 'Find stores nearby' })
   @ApiQuery({ name: 'lat', required: true, type: Number })
   @ApiQuery({ name: 'lng', required: true, type: Number })
-  @ApiQuery({ name: 'radius', required: false, type: Number, description: 'Radius in meters (default: 5000)' })
+  @ApiQuery({
+    name: 'radius',
+    required: false,
+    type: Number,
+    description: 'Radius in meters (default: 5000)',
+  })
   async findNearby(
     @Query('lat') latitude: number,
     @Query('lng') longitude: number,
     @Query('radius') radius: number = 5000,
   ) {
-    return this.storesService.findNearby(
-      Number(latitude),
-      Number(longitude),
-      Number(radius),
-    );
+    return this.storesService.findNearby(Number(latitude), Number(longitude), Number(radius));
   }
 
   @Get('search')
   @ApiOperation({ summary: 'Search stores' })
   @ApiQuery({ name: 'q', required: false, type: String })
   @ApiQuery({ name: 'category', required: false, type: String })
-  async search(
-    @Query('q') searchTerm?: string,
-    @Query('category') category?: string,
-  ) {
+  async search(@Query('q') searchTerm?: string, @Query('category') category?: string) {
     return this.storesService.search(searchTerm, category);
   }
 

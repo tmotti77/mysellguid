@@ -17,7 +17,7 @@ export class NotificationsController {
       req.user.id,
       'Test Notification',
       'Push notifications are working!',
-      { type: 'test' }
+      { type: 'test' },
     );
     return { success: true, message: 'Test notification sent' };
   }

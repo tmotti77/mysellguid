@@ -169,8 +169,12 @@ export class InitialSchema1737756000000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop foreign key constraints
-    await queryRunner.query(`ALTER TABLE "user_saved_sales" DROP CONSTRAINT "FK_user_saved_sales_saleId"`);
-    await queryRunner.query(`ALTER TABLE "user_saved_sales" DROP CONSTRAINT "FK_user_saved_sales_userId"`);
+    await queryRunner.query(
+      `ALTER TABLE "user_saved_sales" DROP CONSTRAINT "FK_user_saved_sales_saleId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "user_saved_sales" DROP CONSTRAINT "FK_user_saved_sales_userId"`,
+    );
     await queryRunner.query(`ALTER TABLE "sales" DROP CONSTRAINT "FK_sales_storeId"`);
     await queryRunner.query(`ALTER TABLE "stores" DROP CONSTRAINT "FK_stores_ownerId"`);
 

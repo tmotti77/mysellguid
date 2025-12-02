@@ -70,8 +70,13 @@ export const authService = {
 };
 
 export const salesService = {
-  getNearby: (latitude: number, longitude: number, radius: number = 5000) =>
-    api.get(`/sales/nearby?lat=${latitude}&lng=${longitude}&radius=${radius}`),
+  getNearby: (latitude: number, longitude: number, radius: number = 5000, category?: string) => {
+    const params: any = { lat: latitude, lng: longitude, radius };
+    if (category) {
+      params.category = category;
+    }
+    return api.get('/sales/nearby', { params });
+  },
 
   getAll: (params?: { category?: string; limit?: number; offset?: number }) =>
     api.get('/sales', { params }),

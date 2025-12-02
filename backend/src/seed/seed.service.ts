@@ -72,7 +72,7 @@ export class SeedService {
   }
 
   private async createStores(users: User[]): Promise<Store[]> {
-    const storeOwner = users.find(u => u.role === UserRole.STORE_OWNER);
+    const storeOwner = users.find((u) => u.role === UserRole.STORE_OWNER);
 
     const storesData = [
       {
@@ -99,8 +99,8 @@ export class SeedService {
         address: 'Local Street 200',
         city: 'Ramat Gan',
         country: 'Israel',
-        latitude: 32.1550,
-        longitude: 34.9170,
+        latitude: 32.155,
+        longitude: 34.917,
         phoneNumber: '+972-3-2345678',
         email: 'contact@techzone.com',
         logo: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=200',
@@ -116,8 +116,8 @@ export class SeedService {
         address: 'Local Street 300',
         city: 'Ramat Gan',
         country: 'Israel',
-        latitude: 32.1540,
-        longitude: 34.9160,
+        latitude: 32.154,
+        longitude: 34.916,
         phoneNumber: '+972-3-3456789',
         email: 'hello@homestyle.com',
         logo: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=200',
@@ -205,7 +205,8 @@ export class SeedService {
       // Fashion Paradise Sales
       {
         title: '50% OFF Everything - End of Season Sale!',
-        description: 'Huge clearance sale! All items 50% off. Men\'s and women\'s clothing, shoes, and accessories. Limited time only!',
+        description:
+          "Huge clearance sale! All items 50% off. Men's and women's clothing, shoes, and accessories. Limited time only!",
         category: SaleCategory.CLOTHING,
         discountPercentage: 50,
         originalPrice: 200,
@@ -220,7 +221,8 @@ export class SeedService {
       },
       {
         title: 'Summer Dress Collection - 30% OFF',
-        description: 'Beautiful summer dresses in various colors and styles. Perfect for the season!',
+        description:
+          'Beautiful summer dresses in various colors and styles. Perfect for the season!',
         category: SaleCategory.CLOTHING,
         discountPercentage: 30,
         originalPrice: 150,
@@ -236,7 +238,8 @@ export class SeedService {
       // Tech Zone Sales
       {
         title: 'Smartphone Mega Sale - Up to 40% OFF',
-        description: 'Latest smartphones at incredible prices! Samsung, iPhone, and more. Limited stock!',
+        description:
+          'Latest smartphones at incredible prices! Samsung, iPhone, and more. Limited stock!',
         category: SaleCategory.ELECTRONICS,
         discountPercentage: 40,
         originalPrice: 3000,

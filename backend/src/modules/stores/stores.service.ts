@@ -31,22 +31,22 @@ export class StoresService {
             storeData.longitude = lng;
             storeData.location = `POINT(${lng} ${lat})`;
           } else {
-             // Fallback if geocoding fails to find results
-             console.warn(`Geocoding failed for address: ${address}`);
-             const defaultLat = 32.0853;
-             const defaultLng = 34.7818;
-             storeData.latitude = defaultLat;
-             storeData.longitude = defaultLng;
-             storeData.location = `POINT(${defaultLng} ${defaultLat})`;
+            // Fallback if geocoding fails to find results
+            console.warn(`Geocoding failed for address: ${address}`);
+            const defaultLat = 32.0853;
+            const defaultLng = 34.7818;
+            storeData.latitude = defaultLat;
+            storeData.longitude = defaultLng;
+            storeData.location = `POINT(${defaultLng} ${defaultLat})`;
           }
         } else {
-           // Fallback if no API key
-           console.warn('GOOGLE_MAPS_API_KEY not configured');
-           const defaultLat = 32.0853;
-           const defaultLng = 34.7818;
-           storeData.latitude = defaultLat;
-           storeData.longitude = defaultLng;
-           storeData.location = `POINT(${defaultLng} ${defaultLat})`;
+          // Fallback if no API key
+          console.warn('GOOGLE_MAPS_API_KEY not configured');
+          const defaultLat = 32.0853;
+          const defaultLng = 34.7818;
+          storeData.latitude = defaultLat;
+          storeData.longitude = defaultLng;
+          storeData.location = `POINT(${defaultLng} ${defaultLat})`;
         }
       } catch (error) {
         console.error('Geocoding error:', error);

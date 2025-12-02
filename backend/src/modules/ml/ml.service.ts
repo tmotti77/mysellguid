@@ -37,7 +37,7 @@ export class MlService {
     };
   }
 
-  async generateEmbedding(text: string): Promise<number[]> {
+  async generateEmbedding(_text: string): Promise<number[]> {
     // Generate embeddings for similarity search
     // Implementation note:
     // const response = await this.openai.embeddings.create({
@@ -49,7 +49,7 @@ export class MlService {
     return new Array(1536).fill(0); // Placeholder
   }
 
-  async getRecommendations(userId: string, userPreferences: any) {
+  async getRecommendations(userId: string, _userPreferences: unknown) {
     // Use pgvector similarity search to find matching sales
     return {
       message: 'Recommendations placeholder - ML integration pending',

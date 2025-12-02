@@ -35,10 +35,7 @@ export class BookmarksController {
   @ApiResponse({ status: 404, description: 'Sale not found' })
   @ApiResponse({ status: 409, description: 'Sale already bookmarked' })
   async addBookmark(@Request() req, @Param('saleId') saleId: string) {
-    const bookmark = await this.bookmarksService.addBookmark(
-      req.user.id,
-      saleId,
-    );
+    const bookmark = await this.bookmarksService.addBookmark(req.user.id, saleId);
     return {
       message: 'Sale bookmarked successfully',
       bookmarked: true,
@@ -61,10 +58,7 @@ export class BookmarksController {
   @ApiParam({ name: 'saleId', description: 'Sale ID to check' })
   @ApiResponse({ status: 200, description: 'Bookmark status returned' })
   async checkBookmark(@Request() req, @Param('saleId') saleId: string) {
-    const isBookmarked = await this.bookmarksService.isBookmarked(
-      req.user.id,
-      saleId,
-    );
+    const isBookmarked = await this.bookmarksService.isBookmarked(req.user.id, saleId);
     return { saleId, isBookmarked };
   }
 
@@ -81,11 +75,7 @@ export class BookmarksController {
     description: 'User longitude for distance calculation',
   })
   @ApiResponse({ status: 200, description: 'Bookmarked sales returned' })
-  async getUserBookmarks(
-    @Request() req,
-    @Query('lat') lat?: string,
-    @Query('lng') lng?: string,
-  ) {
+  async getUserBookmarks(@Request() req, @Query('lat') lat?: string, @Query('lng') lng?: string) {
     // If coordinates provided, return with distance
     if (lat && lng) {
       const latitude = parseFloat(lat);

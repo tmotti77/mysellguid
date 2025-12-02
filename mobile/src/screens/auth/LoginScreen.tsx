@@ -14,6 +14,7 @@ import {
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { useI18n } from '../../i18n/i18nContext';
 import { Ionicons } from '@expo/vector-icons';
 
 type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
@@ -24,6 +25,7 @@ interface Props {
 
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const { signIn } = useAuth();
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,7 +33,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert(t('error'), 'Please fill in all fields');
       return;
     }
 
@@ -39,7 +41,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     try {
       await signIn(email, password);
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message);
+      Alert.alert(t('loginError'), error.message);
     } finally {
       setLoading(false);
     }
@@ -60,13 +62,13 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             <Ionicons name="arrow-back" size={24} color="#111827" />
           </TouchableOpacity>
 
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to your account</Text>
+          <Text style={styles.title}>{t('welcome')}</Text>
+          <Text style={styles.subtitle}>{t('welcomeSubtitle')}</Text>
 
           {/* Form */}
           <View style={styles.form}>
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>{t('email')}</Text>
               <TextInput
                 style={styles.input}
                 placeholder="your@email.com"
@@ -79,7 +81,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
+              <Text style={styles.label}>{t('password')}</Text>
               <View style={styles.passwordContainer}>
                 <TextInput
                   style={styles.passwordInput}
@@ -110,14 +112,14 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.loginButtonText}>Sign In</Text>
+                <Text style={styles.loginButtonText}>{t('login')}</Text>
               )}
             </TouchableOpacity>
 
             <View style={styles.signupContainer}>
-              <Text style={styles.signupText}>Don't have an account? </Text>
+              <Text style={styles.signupText}>{t('dontHaveAccount')} </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.signupLink}>Sign Up</Text>
+                <Text style={styles.signupLink}>{t('register')}</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -88,7 +88,8 @@ const SavedScreen = () => {
   const renderSaleCard = ({ item }: { item: Sale }) => (
     <TouchableOpacity
       style={styles.saleCard}
-      onPress={() => navigation.navigate('SaleDetail' as never, { saleId: item.id } as never)}
+      // @ts-expect-error - Navigation types are complex
+      onPress={() => navigation.navigate('SaleDetail', { saleId: item.id })}
     >
       <Image
         source={{

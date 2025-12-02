@@ -67,7 +67,7 @@ export class UsersService {
   async updateLocation(userId: string, latitude: number, longitude: number): Promise<User> {
     return this.update(userId, {
       defaultLatitude: latitude,
-      defaultLongitude: longitude
+      defaultLongitude: longitude,
     });
   }
 

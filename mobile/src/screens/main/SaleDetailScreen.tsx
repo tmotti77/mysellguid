@@ -15,6 +15,7 @@ import { RouteProp } from '@react-navigation/native';
 import { DiscoverStackParamList, Sale } from '../../types';
 import { salesService, bookmarksService } from '../../services/api';
 import { Ionicons } from '@expo/vector-icons';
+import { shareToWhatsApp, shareWithOptions } from '../../utils/share';
 
 type SaleDetailScreenNavigationProp = StackNavigationProp<
   DiscoverStackParamList,
@@ -90,12 +91,8 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     if (!sale) return;
 
     try {
-      const message = `Check out this sale: ${sale.title} - ${sale.discountPercentage}% OFF at ${sale.store.name}!`;
-
-      await Share.share({
-        message: message,
-        title: sale.title,
-      });
+      // Show options with WhatsApp as primary choice
+      await shareWithOptions(sale);
 
       // Track share analytics (fire and forget)
       salesService.trackShare(saleId).catch(e => console.error('Failed to track share:', e));
@@ -103,6 +100,19 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       if (error.message !== 'Share dismissed') {
         console.error('Error sharing:', error);
       }
+    }
+  };
+
+  const handleWhatsAppShare = async () => {
+    if (!sale) return;
+
+    try {
+      await shareToWhatsApp(sale);
+
+      // Track share analytics (fire and forget)
+      salesService.trackShare(saleId).catch(e => console.error('Failed to track share:', e));
+    } catch (error: any) {
+      console.error('Error sharing to WhatsApp:', error);
     }
   };
 

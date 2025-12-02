@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  UseGuards,
-  Request,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
@@ -49,10 +41,7 @@ export class AuthController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Refresh access token' })
   async refreshTokens(@Request() req) {
-    return this.authService.refreshTokens(
-      req.user.sub,
-      req.user.refreshToken,
-    );
+    return this.authService.refreshTokens(req.user.sub, req.user.refreshToken);
   }
 
   @Post('logout')

@@ -23,18 +23,18 @@ export class NotificationsService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
-  ) { }
+  ) {}
 
   async sendPushNotification(payload: PushNotificationPayload): Promise<void> {
     const tokens = Array.isArray(payload.to) ? payload.to : [payload.to];
-    const validTokens = tokens.filter(token => token && token.startsWith('ExponentPushToken'));
+    const validTokens = tokens.filter((token) => token && token.startsWith('ExponentPushToken'));
 
     if (validTokens.length === 0) {
       this.logger.warn('No valid push tokens provided');
       return;
     }
 
-    const messages = validTokens.map(token => ({
+    const messages = validTokens.map((token) => ({
       to: token,
       sound: payload.sound || 'default',
       title: payload.title,
@@ -48,7 +48,7 @@ export class NotificationsService {
     try {
       await axios.post(this.EXPO_PUSH_URL, messages, {
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'Content-Type': 'application/json',
         },
       });
@@ -73,7 +73,7 @@ export class NotificationsService {
     latitude: number,
     longitude: number,
     radius: number = 10000, // 10km default
-    discountPercentage?: number
+    discountPercentage?: number,
   ): Promise<void> {
     const users = await this.usersRepository
       .createQueryBuilder('user')
@@ -85,14 +85,16 @@ export class NotificationsService {
           ST_SetSRID(ST_Point(:longitude, :latitude), 4326)::geography,
           :radius
         )`,
-        { longitude, latitude, radius }
+        { longitude, latitude, radius },
       )
       .getMany();
 
     if (users.length === 0) return;
 
-    const tokens = users.map(user => user.fcmToken).filter(token => token);
-    const body = discountPercentage ? `${discountPercentage}% OFF at ${storeName}!` : `New sale at ${storeName}`;
+    const tokens = users.map((user) => user.fcmToken).filter((token) => token);
+    const body = discountPercentage
+      ? `${discountPercentage}% OFF at ${storeName}!`
+      : `New sale at ${storeName}`;
 
     await this.sendPushNotification({
       to: tokens,

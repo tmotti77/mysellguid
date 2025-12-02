@@ -37,9 +37,7 @@ export class UploadService {
 
   private initializeS3Client() {
     if (!envConfig.storage.accessKey || !envConfig.storage.secretKey) {
-      this.logger.warn(
-        'S3/R2 credentials not configured, falling back to local storage',
-      );
+      this.logger.warn('S3/R2 credentials not configured, falling back to local storage');
       this.storageType = 'local';
       this.ensureUploadDirectory();
       return;
@@ -71,10 +69,7 @@ export class UploadService {
   /**
    * Upload image with automatic resizing to multiple sizes
    */
-  async uploadImage(
-    file: Express.Multer.File,
-    folder: string = 'sales',
-  ): Promise<UploadedImages> {
+  async uploadImage(file: Express.Multer.File, folder: string = 'sales'): Promise<UploadedImages> {
     // Validate file
     this.validateImage(file);
 
@@ -122,9 +117,7 @@ export class UploadService {
           .toBuffer();
       } else {
         // Original - just compress and convert to JPEG
-        processedBuffer = await sharp(buffer)
-          .jpeg({ quality: 90, progressive: true })
-          .toBuffer();
+        processedBuffer = await sharp(buffer).jpeg({ quality: 90, progressive: true }).toBuffer();
       }
     } catch (error) {
       this.logger.error(`Failed to process image: ${key}`, error);
@@ -141,10 +134,7 @@ export class UploadService {
   /**
    * Upload to local filesystem
    */
-  private async uploadToLocal(
-    buffer: Buffer,
-    key: string,
-  ): Promise<string> {
+  private async uploadToLocal(buffer: Buffer, key: string): Promise<string> {
     const filePath = join(this.localUploadPath, key);
     const directory = join(this.localUploadPath, key.split('/')[0]);
 
@@ -181,10 +171,7 @@ export class UploadService {
       this.logger.log(`Uploaded to ${this.storageType.toUpperCase()}: ${key}`);
       return key;
     } catch (error) {
-      this.logger.error(
-        `Failed to upload to ${this.storageType.toUpperCase()}: ${key}`,
-        error,
-      );
+      this.logger.error(`Failed to upload to ${this.storageType.toUpperCase()}: ${key}`, error);
       throw new BadRequestException('Failed to upload image');
     }
   }
@@ -228,10 +215,7 @@ export class UploadService {
 
     await Promise.allSettled(
       ['original', 'large', 'medium', 'thumb'].map(async (variant) => {
-        const filePath = join(
-          this.localUploadPath,
-          `${baseKey}-${variant}.jpg`,
-        );
+        const filePath = join(this.localUploadPath, `${baseKey}-${variant}.jpg`);
         try {
           await fs.unlink(filePath);
         } catch (error) {
@@ -280,9 +264,7 @@ export class UploadService {
     }
 
     if (!allowedMimes.includes(file.mimetype)) {
-      throw new BadRequestException(
-        `Only ${allowedMimes.join(', ')} images are allowed`,
-      );
+      throw new BadRequestException(`Only ${allowedMimes.join(', ')} images are allowed`);
     }
 
     if (file.size > maxSize) {
@@ -295,10 +277,7 @@ export class UploadService {
   /**
    * Upload multiple images
    */
-  async uploadImages(
-    files: Express.Multer.File[],
-    folder: string = 'sales',
-  ): Promise<string[]> {
+  async uploadImages(files: Express.Multer.File[], folder: string = 'sales'): Promise<string[]> {
     if (!files || files.length === 0) {
       throw new BadRequestException('No files provided');
     }
@@ -307,9 +286,7 @@ export class UploadService {
       throw new BadRequestException('Maximum 5 images allowed');
     }
 
-    const uploads = await Promise.all(
-      files.map((file) => this.uploadImage(file, folder)),
-    );
+    const uploads = await Promise.all(files.map((file) => this.uploadImage(file, folder)));
 
     // Return medium-sized URLs (good balance for mobile/web)
     return uploads.map((upload) => upload.medium);

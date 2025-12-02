@@ -18,6 +18,7 @@ import { salesService } from '../../services/api';
 import { Sale } from '../../types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { DiscoverStackParamList } from '../../types';
+import { useI18n } from '../../i18n/i18nContext';
 
 type DiscoverScreenNavigationProp = StackNavigationProp<
   DiscoverStackParamList,
@@ -29,6 +30,7 @@ interface Props {
 }
 
 const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
+  const { t } = useI18n();
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,13 +41,13 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const categories = [
-    { id: null, label: 'All' },
-    { id: 'clothing', label: 'Fashion' },
-    { id: 'electronics', label: 'Electronics' },
-    { id: 'home_goods', label: 'Home' },
-    { id: 'beauty', label: 'Beauty' },
-    { id: 'sports', label: 'Sports' },
-    { id: 'food', label: 'Food' },
+    { id: null, label: t('all') },
+    { id: 'clothing', label: t('fashion') },
+    { id: 'electronics', label: t('electronics') },
+    { id: 'home_goods', label: t('home') },
+    { id: 'beauty', label: t('beauty') },
+    { id: 'sports', label: t('sports') },
+    { id: 'food', label: t('food') },
   ];
 
   useEffect(() => {
@@ -62,7 +64,7 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Location permission is required to find nearby sales');
+        Alert.alert(t('locationRequired'), 'Location permission is required to find nearby sales');
         return;
       }
 
@@ -70,7 +72,7 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
       setLocation(currentLocation);
     } catch (error) {
       console.error('Error getting location:', error);
-      Alert.alert('Error', 'Failed to get your location');
+      Alert.alert(t('error'), 'Failed to get your location');
     }
   };
 
@@ -155,7 +157,7 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#4F46E5" />
-        <Text style={styles.loadingText}>Finding sales near you...</Text>
+        <Text style={styles.loadingText}>{t('findingSales')}</Text>
       </View>
     );
   }
@@ -164,12 +166,12 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
     return (
       <View style={styles.errorContainer}>
         <Ionicons name="location-outline" size={64} color="#6B7280" />
-        <Text style={styles.errorText}>Location access required</Text>
+        <Text style={styles.errorText}>{t('locationRequired')}</Text>
         <TouchableOpacity
           style={styles.retryButton}
           onPress={requestLocationPermission}
         >
-          <Text style={styles.retryButtonText}>Enable Location</Text>
+          <Text style={styles.retryButtonText}>{t('enableLocation')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -183,7 +185,7 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
           <Ionicons name="search" size={20} color="#6B7280" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search sales..."
+            placeholder={t('searchPlaceholder')}
             value={searchQuery}
             onChangeText={setSearchQuery}
             returnKeyType="search"
@@ -280,8 +282,8 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
             <Marker
               key={sale.id}
               coordinate={{
-                latitude: parseFloat(sale.latitude),
-                longitude: parseFloat(sale.longitude),
+                latitude: Number(sale.latitude),
+                longitude: Number(sale.longitude),
               }}
               onPress={() => navigation.navigate('SaleDetail', { saleId: sale.id })}
             >
@@ -313,7 +315,7 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="search-outline" size={64} color="#6B7280" />
-              <Text style={styles.emptyText}>No sales found nearby</Text>
+              <Text style={styles.emptyText}>{t('noSalesFound')}</Text>
               <Text style={styles.emptySubtext}>Try increasing the search radius</Text>
             </View>
           }
@@ -324,7 +326,7 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
 
       {/* Sale Count */}
       <View style={styles.countBadge}>
-        <Text style={styles.countText}>{sales.length} sales nearby</Text>
+        <Text style={styles.countText}>{sales.length} {t('nearbyDeals')}</Text>
       </View>
     </View>
   );

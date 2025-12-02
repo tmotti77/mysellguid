@@ -51,7 +51,7 @@ export class UserSavedSalesService {
       skip: offset,
     });
 
-    return savedSales.map(ss => ss.sale);
+    return savedSales.map((ss) => ss.sale);
   }
 
   async isSaleSaved(userId: string, saleId: string): Promise<boolean> {

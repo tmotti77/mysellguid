@@ -7,8 +7,8 @@ export const useNotifications = () => {
   const navigation = useNavigation();
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
   const [notification, setNotification] = useState<Notifications.Notification | null>(null);
-  const notificationListener = useRef<Notifications.Subscription>();
-  const responseListener = useRef<Notifications.Subscription>();
+  const notificationListener = useRef<Notifications.Subscription | null>(null);
+  const responseListener = useRef<Notifications.Subscription | null>(null);
 
   useEffect(() => {
     // Initialize notifications
@@ -60,18 +60,21 @@ export const useNotifications = () => {
   };
 
   const handleNotificationResponse = (response: Notifications.NotificationResponse) => {
-    const data = response.notification.request.content.data;
+    const data = response.notification.request.content.data as Record<string, string> | undefined;
 
     // Handle different notification types
     if (data?.saleId) {
       // Navigate to sale detail
-      navigation.navigate('SaleDetail' as never, { saleId: data.saleId } as never);
+      // @ts-expect-error - Navigation types are complex
+      navigation.navigate('SaleDetail', { saleId: data.saleId });
     } else if (data?.storeId) {
       // Navigate to store detail
-      navigation.navigate('StoreDetail' as never, { storeId: data.storeId } as never);
+      // @ts-expect-error - Navigation types are complex
+      navigation.navigate('StoreDetail', { storeId: data.storeId });
     } else if (data?.screen) {
       // Navigate to specific screen
-      navigation.navigate(data.screen as never);
+      // @ts-expect-error - Navigation types are complex
+      navigation.navigate(data.screen);
     }
   };
 

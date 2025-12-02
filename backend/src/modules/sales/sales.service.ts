@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Sale, SaleStatus } from './entities/sale.entity';
 import { UploadService } from '../upload/upload.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -23,7 +23,7 @@ export class SalesService {
     private salesRepository: Repository<Sale>,
     private uploadService: UploadService,
     private notificationsService: NotificationsService,
-  ) { }
+  ) {}
 
   async create(saleData: Partial<Sale>): Promise<Sale> {
     // Create PostGIS POINT from latitude and longitude
@@ -35,20 +35,24 @@ export class SalesService {
     const savedSale = await this.salesRepository.save(sale);
 
     // Trigger notification asynchronously
-    this.findOne(savedSale.id).then(fullSale => {
-      if (fullSale && fullSale.store) {
-        this.notificationsService.notifyNewSale(
-          fullSale.title,
-          fullSale.store.name,
-          fullSale.category,
-          fullSale.id,
-          fullSale.latitude,
-          fullSale.longitude,
-          10000, // 10km radius
-          fullSale.discountPercentage
-        ).catch(err => console.error('Failed to send notification:', err));
-      }
-    }).catch(err => console.error('Failed to fetch sale for notification:', err));
+    this.findOne(savedSale.id)
+      .then((fullSale) => {
+        if (fullSale && fullSale.store) {
+          this.notificationsService
+            .notifyNewSale(
+              fullSale.title,
+              fullSale.store.name,
+              fullSale.category,
+              fullSale.id,
+              fullSale.latitude,
+              fullSale.longitude,
+              10000, // 10km radius
+              fullSale.discountPercentage,
+            )
+            .catch((err) => console.error('Failed to send notification:', err));
+        }
+      })
+      .catch((err) => console.error('Failed to fetch sale for notification:', err));
 
     return savedSale;
   }
@@ -83,7 +87,7 @@ export class SalesService {
     const sales = await query.getMany();
 
     // Fix: Convert simple-array strings to actual arrays
-    sales.forEach(sale => {
+    sales.forEach((sale) => {
       if (typeof sale.images === 'string') {
         (sale as any).images = (sale.images as string).split(',');
       }
@@ -227,9 +231,7 @@ export class SalesService {
       const imagesToDelete = oldImages.filter((img) => !newImages.includes(img));
 
       // Delete images in parallel
-      await Promise.allSettled(
-        imagesToDelete.map((url) => this.uploadService.deleteImage(url)),
-      );
+      await Promise.allSettled(imagesToDelete.map((url) => this.uploadService.deleteImage(url)));
     }
 
     Object.assign(sale, updateData);
@@ -241,9 +243,7 @@ export class SalesService {
 
     // Delete all images associated with this sale
     if (sale.images && sale.images.length > 0) {
-      await Promise.allSettled(
-        sale.images.map((url) => this.uploadService.deleteImage(url)),
-      );
+      await Promise.allSettled(sale.images.map((url) => this.uploadService.deleteImage(url)));
     }
 
     await this.salesRepository.remove(sale);
@@ -280,11 +280,14 @@ export class SalesService {
       .execute();
   }
 
-  async search(searchTerm: string, options?: {
-    category?: string;
-    minDiscount?: number;
-    limit?: number;
-  }): Promise<Sale[]> {
+  async search(
+    searchTerm: string,
+    options?: {
+      category?: string;
+      minDiscount?: number;
+      limit?: number;
+    },
+  ): Promise<Sale[]> {
     const query = this.salesRepository
       .createQueryBuilder('sale')
       .leftJoinAndSelect('sale.store', 'store')
@@ -314,7 +317,7 @@ export class SalesService {
     const sales = await query.orderBy('sale.discountPercentage', 'DESC').getMany();
 
     // Fix: Convert simple-array strings to actual arrays
-    sales.forEach(sale => {
+    sales.forEach((sale) => {
       if (typeof sale.images === 'string') {
         (sale as any).images = (sale.images as string).split(',');
       }

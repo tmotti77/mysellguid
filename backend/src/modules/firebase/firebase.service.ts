@@ -19,12 +19,8 @@ export class FirebaseService implements OnModuleInit {
   onModuleInit() {
     try {
       // Check if Firebase credentials are configured
-      const serviceAccountPath = this.configService.get<string>(
-        'FIREBASE_SERVICE_ACCOUNT_PATH',
-      );
-      const serviceAccountJson = this.configService.get<string>(
-        'FIREBASE_SERVICE_ACCOUNT_JSON',
-      );
+      const serviceAccountPath = this.configService.get<string>('FIREBASE_SERVICE_ACCOUNT_PATH');
+      const serviceAccountJson = this.configService.get<string>('FIREBASE_SERVICE_ACCOUNT_JSON');
 
       if (serviceAccountPath || serviceAccountJson) {
         let serviceAccount;
@@ -66,10 +62,7 @@ export class FirebaseService implements OnModuleInit {
   /**
    * Send push notification to a single device
    */
-  async sendToDevice(
-    fcmToken: string,
-    payload: PushNotificationPayload,
-  ): Promise<boolean> {
+  async sendToDevice(fcmToken: string, payload: PushNotificationPayload): Promise<boolean> {
     if (!this.isInitialized()) {
       this.logger.warn('Firebase not initialized, skipping notification');
       return false;
@@ -161,9 +154,7 @@ export class FirebaseService implements OnModuleInit {
       if (response.failureCount > 0) {
         response.responses.forEach((resp, idx) => {
           if (!resp.success) {
-            this.logger.error(
-              `Failed to send to token ${fcmTokens[idx]}: ${resp.error?.message}`,
-            );
+            this.logger.error(`Failed to send to token ${fcmTokens[idx]}: ${resp.error?.message}`);
           }
         });
       }
@@ -181,10 +172,7 @@ export class FirebaseService implements OnModuleInit {
   /**
    * Send notification to a topic (for broadcast messages)
    */
-  async sendToTopic(
-    topic: string,
-    payload: PushNotificationPayload,
-  ): Promise<boolean> {
+  async sendToTopic(topic: string, payload: PushNotificationPayload): Promise<boolean> {
     if (!this.isInitialized()) {
       this.logger.warn('Firebase not initialized, skipping notification');
       return false;
@@ -228,10 +216,7 @@ export class FirebaseService implements OnModuleInit {
   /**
    * Subscribe devices to a topic
    */
-  async subscribeToTopic(
-    fcmTokens: string[],
-    topic: string,
-  ): Promise<boolean> {
+  async subscribeToTopic(fcmTokens: string[], topic: string): Promise<boolean> {
     if (!this.isInitialized()) {
       this.logger.warn('Firebase not initialized, cannot subscribe to topic');
       return false;
@@ -239,9 +224,7 @@ export class FirebaseService implements OnModuleInit {
 
     try {
       await admin.messaging().subscribeToTopic(fcmTokens, topic);
-      this.logger.log(
-        `Subscribed ${fcmTokens.length} devices to topic: ${topic}`,
-      );
+      this.logger.log(`Subscribed ${fcmTokens.length} devices to topic: ${topic}`);
       return true;
     } catch (error) {
       this.logger.error(`Failed to subscribe to topic: ${error.message}`);
@@ -252,10 +235,7 @@ export class FirebaseService implements OnModuleInit {
   /**
    * Unsubscribe devices from a topic
    */
-  async unsubscribeFromTopic(
-    fcmTokens: string[],
-    topic: string,
-  ): Promise<boolean> {
+  async unsubscribeFromTopic(fcmTokens: string[], topic: string): Promise<boolean> {
     if (!this.isInitialized()) {
       this.logger.warn('Firebase not initialized, cannot unsubscribe from topic');
       return false;
@@ -263,9 +243,7 @@ export class FirebaseService implements OnModuleInit {
 
     try {
       await admin.messaging().unsubscribeFromTopic(fcmTokens, topic);
-      this.logger.log(
-        `Unsubscribed ${fcmTokens.length} devices from topic: ${topic}`,
-      );
+      this.logger.log(`Unsubscribed ${fcmTokens.length} devices from topic: ${topic}`);
       return true;
     } catch (error) {
       this.logger.error(`Failed to unsubscribe from topic: ${error.message}`);

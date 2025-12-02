@@ -40,7 +40,6 @@ export interface Store {
   rating: number;
   reviewCount: number;
   isVerified: boolean;
-  phoneNumber?: string;
 }
 
 export interface Sale {

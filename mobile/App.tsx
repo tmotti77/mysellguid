@@ -7,22 +7,28 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import { AuthProvider } from './src/context/AuthContext';
 import RootNavigator from './src/navigation/RootNavigator';
 import { theme } from './src/utils/theme';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { I18nProvider } from './src/i18n/i18nContext';
 
 const queryClient = new QueryClient();
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <PaperProvider theme={theme}>
-          <AuthProvider>
-            <NavigationContainer>
-              <StatusBar style="auto" />
-              <RootNavigator />
-            </NavigationContainer>
-          </AuthProvider>
-        </PaperProvider>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <I18nProvider>
+        <QueryClientProvider client={queryClient}>
+          <SafeAreaProvider>
+            <PaperProvider theme={theme}>
+              <AuthProvider>
+                <NavigationContainer>
+                  <StatusBar style="auto" />
+                  <RootNavigator />
+                </NavigationContainer>
+              </AuthProvider>
+            </PaperProvider>
+          </SafeAreaProvider>
+        </QueryClientProvider>
+      </I18nProvider>
+    </ErrorBoundary>
   );
 }

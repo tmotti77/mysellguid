@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Bookmark } from './entities/bookmark.entity';
@@ -89,7 +85,7 @@ export class BookmarksService {
     const sales = bookmarks.map((bookmark) => bookmark.sale);
 
     // Fix: Convert simple-array strings to actual arrays
-    sales.forEach(sale => {
+    sales.forEach((sale) => {
       if (typeof sale.images === 'string') {
         (sale as any).images = (sale.images as string).split(',');
       }
@@ -101,10 +97,7 @@ export class BookmarksService {
   /**
    * Get bookmark IDs for multiple sales (for checking which ones are bookmarked)
    */
-  async getBookmarkedSaleIds(
-    userId: string,
-    saleIds: string[],
-  ): Promise<string[]> {
+  async getBookmarkedSaleIds(userId: string, saleIds: string[]): Promise<string[]> {
     const bookmarks = await this.bookmarksRepository.find({
       where: {
         userId,

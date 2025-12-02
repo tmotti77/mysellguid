@@ -15,4 +15,4 @@ import { NotificationsModule } from '../notifications/notifications.module';
   providers: [SalesService, SaleOwnerGuard],
   exports: [SalesService],
 })
-export class SalesModule { }
+export class SalesModule {}

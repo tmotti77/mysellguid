@@ -164,10 +164,6 @@ export class Sale {
   // Helper method to check if sale is active
   get isActive(): boolean {
     const now = new Date();
-    return (
-      this.status === SaleStatus.ACTIVE &&
-      this.startDate <= now &&
-      this.endDate >= now
-    );
+    return this.status === SaleStatus.ACTIVE && this.startDate <= now && this.endDate >= now;
   }
 }

@@ -10,7 +10,8 @@ export class SeedController {
   @Post()
   @ApiOperation({
     summary: 'Seed database with test data',
-    description: 'Populates database with test users, stores, and sales in Tel Aviv. ⚠️ DEVELOPMENT ONLY - Clears existing data!'
+    description:
+      'Populates database with test users, stores, and sales in Tel Aviv. ⚠️ DEVELOPMENT ONLY - Clears existing data!',
   })
   async seed() {
     const result = await this.seedService.seed();

@@ -1,4 +1,15 @@
-import { IsString, IsOptional, IsNumber, Min, Max, IsEnum, IsEmail, IsUrl, Length, Matches } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  Min,
+  Max,
+  IsEnum,
+  IsEmail,
+  IsUrl,
+  Length,
+  Matches,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { StoreCategory } from '../entities/store.entity';
 
@@ -95,8 +106,8 @@ export class CreateStoreDto {
     description: 'Opening hours',
     example: {
       monday: { open: '09:00', close: '21:00' },
-      sunday: { open: '10:00', close: '18:00' }
-    }
+      sunday: { open: '10:00', close: '18:00' },
+    },
   })
   @IsOptional()
   openingHours?: {

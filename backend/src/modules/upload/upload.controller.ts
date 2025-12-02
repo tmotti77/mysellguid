@@ -6,8 +6,6 @@ import {
   UploadedFile,
   UploadedFiles,
   BadRequestException,
-  ParseFilePipeBuilder,
-  HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import {
@@ -20,7 +18,6 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UploadService } from './upload.service';
-import { envConfig } from '../../config/env.config';
 
 @ApiTags('Upload')
 @Controller('upload')
@@ -34,8 +31,7 @@ export class UploadController {
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Upload a single image',
-    description:
-      'Upload an image and get back multiple sizes (original, large, medium, thumbnail)',
+    description: 'Upload an image and get back multiple sizes (original, large, medium, thumbnail)',
   })
   @ApiBody({
     schema: {
@@ -106,10 +102,7 @@ export class UploadController {
         urls: {
           type: 'array',
           items: { type: 'string' },
-          example: [
-            '/uploads/sales/123-abc-medium.jpg',
-            '/uploads/sales/124-def-medium.jpg',
-          ],
+          example: ['/uploads/sales/123-abc-medium.jpg', '/uploads/sales/124-def-medium.jpg'],
         },
       },
     },

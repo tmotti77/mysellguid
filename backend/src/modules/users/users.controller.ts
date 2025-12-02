@@ -51,15 +51,8 @@ export class UsersController {
 
   @Patch('me/location')
   @ApiOperation({ summary: 'Update user default location' })
-  async updateLocation(
-    @Request() req,
-    @Body() location: { latitude: number; longitude: number },
-  ) {
-    return this.usersService.updateLocation(
-      req.user.id,
-      location.latitude,
-      location.longitude,
-    );
+  async updateLocation(@Request() req, @Body() location: { latitude: number; longitude: number }) {
+    return this.usersService.updateLocation(req.user.id, location.latitude, location.longitude);
   }
 
   @Patch('me/fcm-token')
@@ -77,8 +70,18 @@ export class UsersController {
   // Saved Sales Endpoints
   @Get('me/saved-sales')
   @ApiOperation({ summary: 'Get user saved sales' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max items (default: 50)' })
-  @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Skip items (default: 0)' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Max items (default: 50)',
+  })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    type: Number,
+    description: 'Skip items (default: 0)',
+  })
   async getSavedSales(
     @Request() req,
     @Query('limit') limit: number = 50,

@@ -148,7 +148,9 @@ export const envConfig: EnvConfig = {
 
   app: {
     maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '5242880', 10), // 5MB
-    allowedFileTypes: (process.env.ALLOWED_FILE_TYPES || 'image/jpeg,image/png,image/webp').split(','),
+    allowedFileTypes: (process.env.ALLOWED_FILE_TYPES || 'image/jpeg,image/png,image/webp').split(
+      ',',
+    ),
     defaultSearchRadius: parseInt(process.env.DEFAULT_SEARCH_RADIUS || '5000', 10), // 5km
     maxSearchRadius: parseInt(process.env.MAX_SEARCH_RADIUS || '50000', 10), // 50km
   },
