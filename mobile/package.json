@@ -38,6 +38,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.23.5",
+    "@babel/plugin-transform-template-literals": "^7.27.1",
     "@types/react": "~19.1.10",
     "@types/react-native": "^0.72.8",
     "@typescript-eslint/parser": "^6.16.0",
