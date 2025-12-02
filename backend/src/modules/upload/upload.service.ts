@@ -5,6 +5,16 @@ import { envConfig } from '../../config/env.config';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 
+// Define our own MulterFile interface to avoid devDependency issues in production
+export interface MulterFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  buffer: Buffer;
+}
+
 export interface UploadedImages {
   original: string;
   large: string;
@@ -69,7 +79,7 @@ export class UploadService {
   /**
    * Upload image with automatic resizing to multiple sizes
    */
-  async uploadImage(file: Express.Multer.File, folder: string = 'sales'): Promise<UploadedImages> {
+  async uploadImage(file: MulterFile, folder: string = 'sales'): Promise<UploadedImages> {
     // Validate file
     this.validateImage(file);
 
@@ -255,7 +265,7 @@ export class UploadService {
   /**
    * Validate uploaded file
    */
-  private validateImage(file: Express.Multer.File): void {
+  private validateImage(file: MulterFile): void {
     const maxSize = envConfig.app.maxFileSize;
     const allowedMimes = envConfig.app.allowedFileTypes;
 
@@ -277,7 +287,7 @@ export class UploadService {
   /**
    * Upload multiple images
    */
-  async uploadImages(files: Express.Multer.File[], folder: string = 'sales'): Promise<string[]> {
+  async uploadImages(files: MulterFile[], folder: string = 'sales'): Promise<string[]> {
     if (!files || files.length === 0) {
       throw new BadRequestException('No files provided');
     }

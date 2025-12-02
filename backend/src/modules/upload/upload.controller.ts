@@ -17,7 +17,7 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { UploadService } from './upload.service';
+import { UploadService, MulterFile } from './upload.service';
 
 @ApiTags('Upload')
 @Controller('upload')
@@ -62,7 +62,7 @@ export class UploadController {
     status: 400,
     description: 'Invalid file type or size',
   })
-  async uploadImage(@UploadedFile() file: Express.Multer.File) {
+  async uploadImage(@UploadedFile() file: MulterFile) {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
@@ -111,7 +111,7 @@ export class UploadController {
     status: 400,
     description: 'Invalid files or too many files (max 5)',
   })
-  async uploadImages(@UploadedFiles() files: Express.Multer.File[]) {
+  async uploadImages(@UploadedFiles() files: MulterFile[]) {
     if (!files || files.length === 0) {
       throw new BadRequestException('No files provided');
     }
@@ -150,7 +150,7 @@ export class UploadController {
       },
     },
   })
-  async uploadStoreLogo(@UploadedFile() file: Express.Multer.File) {
+  async uploadStoreLogo(@UploadedFile() file: MulterFile) {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
@@ -188,7 +188,7 @@ export class UploadController {
       },
     },
   })
-  async uploadUserAvatar(@UploadedFile() file: Express.Multer.File) {
+  async uploadUserAvatar(@UploadedFile() file: MulterFile) {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
