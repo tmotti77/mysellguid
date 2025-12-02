@@ -28,7 +28,9 @@
         "ACCESS_BACKGROUND_LOCATION",
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
-        "NOTIFICATIONS"
+        "NOTIFICATIONS",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ],
       "config": {
         "googleMaps": {
@@ -57,7 +59,10 @@
       ]
     ],
     "extra": {
-      "apiUrl": "https://mysellguid-api.onrender.com/api"
+      "apiUrl": "https://mysellguid-api.onrender.com/api",
+      "eas": {
+        "projectId": "92697039-8e9f-4c84-a449-4d68d30b2bb7"
+      }
     }
   }
 }
