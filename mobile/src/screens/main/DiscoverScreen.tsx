@@ -399,10 +399,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
+    maxHeight: 56, // Fixed height to prevent stretching
   },
   categoryContent: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+    alignItems: 'center', // Center chips vertically
   },
   categoryChip: {
     paddingHorizontal: 16,
@@ -410,6 +412,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#F3F4F6',
     marginRight: 8,
+    height: 36, // Fixed height for chips
+    justifyContent: 'center', // Center text vertically
   },
   categoryChipActive: {
     backgroundColor: '#4F46E5',
