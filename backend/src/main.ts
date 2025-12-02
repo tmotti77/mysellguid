@@ -30,15 +30,11 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Serve static files (uploaded images)
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: `/${apiPrefix}/uploads/`,
-  });
-
-  // Set global prefix
+  // Set global prefix FIRST (before static assets)
   app.setGlobalPrefix(apiPrefix);
 
-  // Serve static files (for local storage)
+  // Serve static files (uploaded images) - single configuration
+  // Files will be accessible at /api/uploads/* and /uploads/*
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
   });
