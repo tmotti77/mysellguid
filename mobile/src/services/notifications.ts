@@ -3,6 +3,9 @@ import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
+// Check if we're running in Expo Go (notifications are limited in SDK 53+)
+const isExpoGo = Constants.appOwnership === 'expo';
+
 // Configure notification handler
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -15,38 +18,57 @@ Notifications.setNotificationHandler({
 });
 
 class NotificationService {
+  private notificationsEnabled = false;
+
   // Register for push notifications
   async registerPushToken(): Promise<boolean> {
+    // Skip push notifications in Expo Go (SDK 53+ limitation)
+    if (isExpoGo) {
+      console.log('Push notifications are not available in Expo Go. Use a development build for full functionality.');
+      return false;
+    }
+
     if (!Device.isDevice) {
       console.log('Must use physical device for Push Notifications');
       return false;
     }
 
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-    
-    if (finalStatus !== 'granted') {
-      console.log('Failed to get push notification permissions');
+    try {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      
+      if (finalStatus !== 'granted') {
+        console.log('Push notification permissions not granted');
+        return false;
+      }
+
+      this.notificationsEnabled = true;
+      return true;
+    } catch (error) {
+      console.log('Notifications not available:', error);
       return false;
     }
-
-    return true;
   }
 
   // Get Expo push token
   async getExpoPushToken(): Promise<string | null> {
+    // Skip in Expo Go
+    if (isExpoGo) {
+      return null;
+    }
+
     try {
       const token = await Notifications.getExpoPushTokenAsync({
         projectId: Constants.expoConfig?.extra?.eas?.projectId,
       });
       return token.data;
     } catch (error) {
-      console.error('Error getting push token:', error);
+      console.log('Push token not available (this is normal in Expo Go)');
       return null;
     }
   }

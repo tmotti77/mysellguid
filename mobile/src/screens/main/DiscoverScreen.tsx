@@ -29,6 +29,23 @@ interface Props {
   navigation: DiscoverScreenNavigationProp;
 }
 
+// Helper function to get category color
+const getCategoryColor = (category?: string): string => {
+  const colors: Record<string, string> = {
+    clothing: '#EC4899', // Pink
+    fashion: '#EC4899',
+    electronics: '#3B82F6', // Blue
+    home_goods: '#F59E0B', // Amber
+    home: '#F59E0B',
+    furniture: '#8B5CF6', // Purple
+    beauty: '#EF4444', // Red
+    sports: '#10B981', // Green
+    food: '#F97316', // Orange
+    shoes: '#6366F1', // Indigo
+  };
+  return colors[category || ''] || '#4F46E5'; // Default indigo
+};
+
 const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
   const { t } = useI18n();
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
@@ -278,26 +295,36 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
           showsUserLocation
           showsMyLocationButton
         >
-          {sales.map((sale) => (
+          {sales.map((sale, index) => (
             <Marker
               key={sale.id}
               coordinate={{
-                latitude: Number(sale.latitude),
-                longitude: Number(sale.longitude),
+                latitude: Number(sale.latitude) + (index * 0.0001), // Slight offset to prevent overlap
+                longitude: Number(sale.longitude) + (index * 0.0001),
               }}
               onPress={() => navigation.navigate('SaleDetail', { saleId: sale.id })}
             >
               <View style={styles.markerContainer}>
-                <View style={styles.marker}>
-                  <Ionicons name="pricetag" size={20} color="#FFFFFF" />
+                <View style={[styles.marker, { backgroundColor: getCategoryColor(sale.category) }]}>
+                  <Text style={styles.markerText}>
+                    {sale.discountPercentage ? `${sale.discountPercentage}%` : '🏷️'}
+                  </Text>
                 </View>
+                <View style={styles.markerArrow} />
               </View>
-              <Callout onPress={() => navigation.navigate('SaleDetail', { saleId: sale.id })}>
+              <Callout 
+                style={styles.callout}
+                onPress={() => navigation.navigate('SaleDetail', { saleId: sale.id })}
+              >
                 <View style={styles.calloutContainer}>
-                  <Text style={styles.calloutTitle}>{sale.title}</Text>
-                  <Text style={styles.calloutStore}>{sale.store.name}</Text>
-                  <Text style={styles.calloutDiscount}>{sale.discountPercentage}% OFF</Text>
-                  <Text style={styles.calloutButton}>Tap to view</Text>
+                  <Text style={styles.calloutTitle} numberOfLines={2}>{sale.title}</Text>
+                  <Text style={styles.calloutStore}>{sale.store?.name || 'Unknown Store'}</Text>
+                  {sale.discountPercentage && (
+                    <View style={styles.calloutDiscountBadge}>
+                      <Text style={styles.calloutDiscount}>{sale.discountPercentage}% OFF</Text>
+                    </View>
+                  )}
+                  <Text style={styles.calloutButton}>Tap to view details →</Text>
                 </View>
               </Callout>
             </Marker>
@@ -403,35 +430,71 @@ const styles = StyleSheet.create({
   },
   marker: {
     backgroundColor: '#4F46E5',
-    padding: 8,
-    borderRadius: 20,
-    borderWidth: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 2,
     borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    minWidth: 40,
+    alignItems: 'center',
+  },
+  markerText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  markerArrow: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#4F46E5',
+    marginTop: -1,
+  },
+  callout: {
+    width: 220,
   },
   calloutContainer: {
-    width: 200,
-    padding: 8,
+    padding: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
   },
   calloutTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
+    color: '#111827',
     marginBottom: 4,
   },
   calloutStore: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
-    marginBottom: 4,
+    marginBottom: 8,
+  },
+  calloutDiscountBadge: {
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
   },
   calloutDiscount: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     color: '#DC2626',
-    marginBottom: 4,
   },
   calloutButton: {
     fontSize: 12,
     color: '#4F46E5',
-    marginTop: 4,
+    fontWeight: '500',
   },
   listContent: {
     padding: 16,

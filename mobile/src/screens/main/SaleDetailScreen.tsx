@@ -54,13 +54,15 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const checkBookmarkStatus = async () => {
     try {
-      const response = await bookmarksService.getAll();
-      const bookmarks = response.data.sales || [];
-      const isBookmarked = bookmarks.some((b: any) => b.sale?.id === saleId || b.saleId === saleId);
-      setIsBookmarked(isBookmarked);
-    } catch (error) {
-      console.error('Error checking bookmark status:', error);
-      // If 404 or auth error, just assume not bookmarked
+      // Try to check bookmark status - will fail if not logged in
+      const response = await bookmarksService.check(saleId);
+      setIsBookmarked(response.data?.isBookmarked || false);
+    } catch (error: any) {
+      // If 401 (not logged in) or 404, just assume not bookmarked
+      // This is expected for users who aren't logged in
+      if (error?.response?.status !== 401) {
+        console.log('Bookmark check failed (user may not be logged in)');
+      }
       setIsBookmarked(false);
     }
   };
@@ -79,9 +81,20 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         setIsBookmarked(true);
         Alert.alert('Success', 'Sale saved successfully!');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling bookmark:', error);
-      Alert.alert('Error', 'Failed to save sale');
+      if (error?.response?.status === 401) {
+        Alert.alert(
+          'Login Required',
+          'Please log in to save sales to your favorites.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Login', onPress: () => navigation.getParent()?.navigate('Profile') }
+          ]
+        );
+      } else {
+        Alert.alert('Error', 'Failed to save sale');
+      }
     } finally {
       setBookmarkLoading(false);
     }
