@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { ShoppingBag, Users, TrendingUp, Star, Loader2, Calendar, Eye, MousePointer } from 'lucide-react';
+import { ShoppingBag, Users, TrendingUp, Star, Loader2, Eye, MousePointer } from 'lucide-react';
 import { salesService, storesService } from '@/services/api';
 import { Sale } from '@/types';
 
@@ -35,7 +35,7 @@ export default function DashboardPage() {
                     });
                     setRecentSales(salesData.data || []);
                 }
-            } catch (error) {
+            } catch {
                 // User doesn't have a store yet - this is normal for new users
                 console.log('No store found for user');
             } finally {
@@ -64,7 +64,7 @@ export default function DashboardPage() {
         <div className="space-y-6">
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">Welcome back, {user?.firstName}!</h1>
-                <p className="text-gray-500">Here's what's happening with your store today.</p>
+                <p className="text-gray-500">Here&apos;s what&apos;s happening with your store today.</p>
             </div>
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">

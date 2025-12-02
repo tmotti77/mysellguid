@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { salesService, storesService, uploadService } from '@/services/api';
-import { Loader2, Upload, X, Calendar } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 
 interface StoreData {
     id: string;
@@ -119,8 +119,9 @@ export default function NewSalePage() {
 
             alert('Sale created successfully!');
             router.push('/dashboard/sales');
-        } catch (error: any) {
-            console.error('Error creating sale:', error);
+        } catch (err: unknown) {
+            console.error('Error creating sale:', err);
+            const error = err as { response?: { data?: { message?: string } } };
             alert(error.response?.data?.message || 'Failed to create sale');
         } finally {
             setLoading(false);

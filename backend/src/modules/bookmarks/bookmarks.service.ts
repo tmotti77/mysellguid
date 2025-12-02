@@ -130,7 +130,7 @@ export class BookmarksService {
         s."startDate",
         s."endDate",
         s.status,
-        string_to_array(s.images, ',') as images,
+        COALESCE(string_to_array(NULLIF(s.images, ''), ','), ARRAY[]::text[]) as images,
         s."storeId",
         s.latitude,
         s.longitude,

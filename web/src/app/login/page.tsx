@@ -19,8 +19,9 @@ export default function LoginPage() {
 
         try {
             await login(email, password);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } } };
+            setError(error.response?.data?.message || 'Login failed. Please check your credentials.');
         } finally {
             setLoading(false);
         }
@@ -98,7 +99,7 @@ export default function LoginPage() {
                     </div>
 
                     <div className="text-center text-sm">
-                        <span className="text-gray-600">Don't have an account? </span>
+                        <span className="text-gray-600">Don&apos;t have an account? </span>
                         <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
                             Register your store
                         </Link>

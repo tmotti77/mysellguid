@@ -140,7 +140,7 @@ export class SalesService {
         sale."startDate",
         sale."endDate",
         sale.status,
-        string_to_array(sale.images, ',') as images,
+        COALESCE(string_to_array(NULLIF(sale.images, ''), ','), ARRAY[]::text[]) as images,
         sale."storeId",
         sale.latitude,
         sale.longitude,

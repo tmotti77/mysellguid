@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/api';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 interface User {
     id: string;
@@ -12,11 +12,19 @@ interface User {
     role: string;
 }
 
+interface RegisterData {
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+    role?: string;
+}
+
 interface AuthContextType {
     user: User | null;
     loading: boolean;
     login: (email: string, password: string) => Promise<void>;
-    register: (data: any) => Promise<void>;
+    register: (data: RegisterData) => Promise<void>;
     logout: () => Promise<void>;
 }
 
@@ -26,7 +34,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
-    const pathname = usePathname();
 
     useEffect(() => {
         checkAuth();
@@ -67,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    const register = async (data: any) => {
+    const register = async (data: RegisterData) => {
         try {
             const response = await authService.register(data);
             const { user, accessToken, refreshToken } = response.data;

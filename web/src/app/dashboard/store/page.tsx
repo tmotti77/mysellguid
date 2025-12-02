@@ -2,10 +2,22 @@
 
 import React, { useState, useEffect } from 'react';
 import { storesService, uploadService } from '@/services/api';
-import { Loader2, Save, MapPin, Phone, Globe, Upload, X } from 'lucide-react';
+import { Loader2, Save, MapPin, Phone, Upload, X } from 'lucide-react';
+
+interface StoreFormData {
+    id?: string;
+    name?: string;
+    description?: string;
+    category?: string;
+    address?: string;
+    city?: string;
+    country?: string;
+    phoneNumber?: string;
+    logo?: string;
+}
 
 export default function StoreProfilePage() {
-    const [store, setStore] = useState<any>(null);
+    const [store, setStore] = useState<StoreFormData | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -19,8 +31,8 @@ export default function StoreProfilePage() {
         try {
             const response = await storesService.getMyStore();
             setStore(response.data);
-        } catch (error) {
-            console.error('Error fetching store:', error);
+        } catch {
+            // Error handled silently - store may not exist yet
         } finally {
             setLoading(false);
         }
@@ -28,6 +40,8 @@ export default function StoreProfilePage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!store) return;
+        
         setSaving(true);
         setMessage({ type: '', text: '' });
 
@@ -38,7 +52,7 @@ export default function StoreProfilePage() {
                 await storesService.create(store);
             }
             setMessage({ type: 'success', text: 'Store profile updated successfully!' });
-        } catch (error) {
+        } catch {
             setMessage({ type: 'error', text: 'Failed to update store profile.' });
         } finally {
             setSaving(false);
@@ -46,6 +60,7 @@ export default function StoreProfilePage() {
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        if (!store) return;
         setStore({ ...store, [e.target.name]: e.target.value });
     };
 
@@ -56,9 +71,9 @@ export default function StoreProfilePage() {
         setUploading(true);
         try {
             const response = await uploadService.uploadImage(file);
-            setStore((prev: any) => ({ ...prev, logo: response.data.medium }));
-        } catch (error) {
-            console.error('Error uploading logo:', error);
+            setStore((prev) => prev ? { ...prev, logo: response.data.medium } : null);
+        } catch {
+            // Error uploading logo
             setMessage({ type: 'error', text: 'Failed to upload logo.' });
         } finally {
             setUploading(false);
@@ -66,7 +81,7 @@ export default function StoreProfilePage() {
     };
 
     const removeLogo = () => {
-        setStore((prev: any) => ({ ...prev, logo: '' }));
+        setStore((prev) => prev ? { ...prev, logo: '' } : null);
     };
 
     if (loading) {

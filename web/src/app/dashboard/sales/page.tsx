@@ -5,8 +5,19 @@ import Link from 'next/link';
 import { salesService, storesService } from '@/services/api';
 import { Plus, Edit, Trash2, Loader2, Calendar, Tag } from 'lucide-react';
 
+interface Sale {
+    id: string;
+    title: string;
+    description?: string;
+    category?: string;
+    discountPercentage?: number;
+    originalPrice?: number;
+    salePrice?: number;
+    endDate: string;
+}
+
 export default function SalesPage() {
-    const [sales, setSales] = useState<any[]>([]);
+    const [sales, setSales] = useState<Sale[]>([]);
     const [loading, setLoading] = useState(true);
     const [storeId, setStoreId] = useState<string | null>(null);
 
