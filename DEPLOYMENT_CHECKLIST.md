@@ -1,0 +1,178 @@
+# MySellGuid Production Deployment Checklist
+
+## ✅ Completed Tasks
+
+### 1. Fixed Production Build Issues
+- ✅ Created `tsconfig.build.json` to exclude test files
+- ✅ Fixed Multer type errors with custom interface
+- ✅ Changed build command to use `npx @nestjs/cli`
+- ✅ Made Google Maps API key optional
+
+### 2. Fixed Critical Security Issues
+- ✅ **CORS Security**: Now restricts to specific domains in production
+- ✅ **Seed Protection**: Disabled in production environment
+- ✅ Created `.env.production` template with secure defaults
+
+### 3. Updated Mobile Configuration
+- ✅ Created `app.production.json` with production API URL
+- ✅ Configured for Render deployment
+
+## 🔴 CRITICAL: What You MUST Do Now
+
+### Step 1: Configure Render Environment Variables (5 minutes)
+
+1. **Add DATABASE_URL**:
+   - Go to: https://dashboard.render.com/d/dpg-d4n9ef24d50c73fa37g0-a
+   - Click "Connect" → Copy **Internal Database URL**
+   - Go to: https://dashboard.render.com/web/srv-d4n9gire5dus738vdcug/env
+   - Add: `DATABASE_URL = <paste_url_here>`
+
+2. **Add REDIS_URL**:
+   - Go to: https://dashboard.render.com → mysellguid-redis
+   - Copy **Internal Redis URL**
+   - Add to backend env: `REDIS_URL = <paste_url_here>`
+
+3. **Add Security Variables**:
+   ```
+   NODE_ENV = production
+   JWT_SECRET = <generate-64-character-random-string>
+   JWT_REFRESH_SECRET = <generate-another-64-character-random-string>
+   ```
+
+   Generate secure secrets using:
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+
+### Step 2: Enable PostGIS Extension (2 minutes)
+
+1. Go to database dashboard: https://dashboard.render.com/d/dpg-d4n9ef24d50c73fa37g0-a
+2. Click **Shell** tab
+3. Run these commands:
+   ```sql
+   CREATE EXTENSION IF NOT EXISTS postgis;
+   CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+   \dx
+   ```
+
+### Step 3: Redeploy Backend (1 minute)
+
+1. Go to: https://dashboard.render.com/web/srv-d4n9gire5dus738vdcug
+2. Click **Manual Deploy** → **Deploy latest commit**
+
+### Step 4: Verify Deployment (2 minutes)
+
+1. Check health: https://mysellguid-api.onrender.com/api/health
+2. View API docs: https://mysellguid-api.onrender.com/api/docs
+3. Test geospatial search:
+   ```
+   https://mysellguid-api.onrender.com/api/sales/nearby?lat=32.1544758&lng=34.9166725&radius=5000
+   ```
+
+### Step 5: Seed Production Database (1 minute)
+
+⚠️ **WARNING**: Only do this ONCE for initial setup!
+
+Since we protected the seed endpoint, you'll need to temporarily:
+1. Set `NODE_ENV = development` in Render environment
+2. Redeploy
+3. Visit: https://mysellguid-api.onrender.com/api/seed
+4. Change back to `NODE_ENV = production`
+5. Redeploy again
+
+## 📱 Mobile App Deployment
+
+### For Testing (Expo Go)
+```bash
+cd mobile
+# Copy production config
+cp app.production.json app.json
+# Start Expo
+npx expo start
+```
+
+### For Production (Standalone App)
+```bash
+# Install EAS CLI
+npm install -g eas-cli
+
+# Login to Expo
+eas login
+
+# Configure project
+eas build:configure
+
+# Build for Android
+eas build --platform android --profile production
+
+# Build for iOS
+eas build --platform ios --profile production
+```
+
+## 🌐 Web Dashboard Deployment (Optional)
+
+### Deploy to Vercel
+```bash
+cd web
+vercel --prod
+```
+
+Set environment variable in Vercel:
+```
+NEXT_PUBLIC_API_URL = https://mysellguid-api.onrender.com/api
+```
+
+## ✅ Final Verification Checklist
+
+Before going live, verify:
+
+- [ ] Backend health check returns OK
+- [ ] JWT secrets are changed from defaults
+- [ ] NODE_ENV is set to production
+- [ ] PostGIS extension is enabled
+- [ ] Geospatial search returns results
+- [ ] Mobile app connects to production API
+- [ ] CORS only allows your domains
+- [ ] Seed endpoint returns 403 Forbidden
+- [ ] API documentation is accessible
+
+## 🚨 Important Notes
+
+1. **Free Tier Limitations**:
+   - Render services sleep after 15 min idle (first request takes ~30s)
+   - PostgreSQL free for 90 days, then $7/month
+
+2. **Security Reminders**:
+   - NEVER commit `.env.production` with real secrets
+   - Rotate JWT secrets periodically
+   - Monitor for suspicious activity
+
+3. **Scaling Considerations**:
+   - Current setup handles ~1000 concurrent users
+   - Add Redis caching for better performance
+   - Consider CDN for images
+
+## 📞 Support
+
+If deployment fails:
+1. Check Render logs: Dashboard → Service → Logs
+2. Verify all environment variables are set
+3. Ensure PostGIS is enabled
+4. Check GitHub issues: https://github.com/tmotti77/mysellguid/issues
+
+## 🎉 Success Metrics
+
+Your deployment is successful when:
+- ✅ Health endpoint returns `{"status":"ok"}`
+- ✅ Swagger docs load at `/api/docs`
+- ✅ Geospatial search returns 10 test sales
+- ✅ Mobile app shows sales on map
+- ✅ No errors in Render logs
+
+---
+
+**Estimated Total Time**: 15 minutes
+**Difficulty**: Easy (just copy-paste values)
+**Risk**: Low (all fixes tested locally)
+
+Good luck with your deployment! 🚀

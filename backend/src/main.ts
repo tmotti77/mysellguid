@@ -15,8 +15,17 @@ async function bootstrap() {
   const apiPrefix = configService.get('API_PREFIX') || 'api';
 
   // Enable CORS
+  const isProduction = configService.get('NODE_ENV') === 'production';
   app.enableCors({
-    origin: true,
+    origin: isProduction
+      ? [
+          'https://mysellguid.com',
+          'https://app.mysellguid.com',
+          'https://admin.mysellguid.com',
+          'https://mysellguid-web.vercel.app', // Vercel deployment
+          'http://localhost:8081', // Expo development
+        ]
+      : true, // Allow all origins in development
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
