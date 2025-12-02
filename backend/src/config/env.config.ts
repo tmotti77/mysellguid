@@ -177,9 +177,10 @@ export function validateEnvConfig(): void {
     if (!envConfig.jwt.refreshSecret || envConfig.jwt.refreshSecret === 'your-refresh-secret') {
       errors.push('JWT_REFRESH_SECRET must be set in production');
     }
-    if (!envConfig.googleMaps.apiKey) {
-      errors.push('GOOGLE_MAPS_API_KEY must be set');
-    }
+    // Note: Google Maps API key is optional for MVP - geocoding can be done client-side
+    // if (!envConfig.googleMaps.apiKey) {
+    //   errors.push('GOOGLE_MAPS_API_KEY must be set');
+    // }
   }
 
   if (errors.length > 0) {
