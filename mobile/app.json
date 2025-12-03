@@ -22,6 +22,7 @@
     },
     "android": {
       "package": "com.mysellguid.app",
+      "newArchEnabled": false,
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
