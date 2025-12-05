@@ -10,13 +10,19 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import * as Location from 'expo-location';
 import { bookmarksService } from '../../services/api';
-import { Sale } from '../../types';
+import { Sale, SavedStackParamList } from '../../types';
 
-const SavedScreen = () => {
-  const navigation = useNavigation();
+type SavedScreenNavigationProp = StackNavigationProp<SavedStackParamList, 'SavedHome'>;
+
+interface Props {
+  navigation: SavedScreenNavigationProp;
+}
+
+const SavedScreen: React.FC<Props> = ({ navigation }) => {
   const [savedSales, setSavedSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -88,7 +94,6 @@ const SavedScreen = () => {
   const renderSaleCard = ({ item }: { item: Sale }) => (
     <TouchableOpacity
       style={styles.saleCard}
-      // @ts-expect-error - Navigation types are complex
       onPress={() => navigation.navigate('SaleDetail', { saleId: item.id })}
     >
       <Image
@@ -141,7 +146,7 @@ const SavedScreen = () => {
       </Text>
       <TouchableOpacity
         style={styles.browseButton}
-        onPress={() => navigation.navigate('Discover' as never)}
+        onPress={() => navigation.getParent()?.navigate('Discover')}
       >
         <Text style={styles.browseButtonText}>Browse Sales</Text>
       </TouchableOpacity>

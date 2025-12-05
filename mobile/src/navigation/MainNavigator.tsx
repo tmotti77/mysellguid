@@ -4,8 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { MainTabParamList } from '../types';
 import DiscoverNavigator from './DiscoverNavigator';
 import SearchNavigator from './SearchNavigator';
-import SavedScreen from '../screens/main/SavedScreen';
-import ProfileScreen from '../screens/main/ProfileScreen';
+import SavedNavigator from './SavedNavigator';
+import ProfileNavigator from './ProfileNavigator';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -53,12 +53,12 @@ const MainNavigator = () => {
       />
       <Tab.Screen
         name="Saved"
-        component={SavedScreen}
+        component={SavedNavigator}
         options={{ title: 'Saved' }}
       />
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
+        component={ProfileNavigator}
         options={{ title: 'Profile' }}
       />
     </Tab.Navigator>

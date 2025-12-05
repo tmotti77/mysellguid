@@ -101,3 +101,9 @@ export type ProfileStackParamList = {
   EditProfile: undefined;
   Preferences: undefined;
 };
+
+export type SavedStackParamList = {
+  SavedHome: undefined;
+  SaleDetail: { saleId: string };
+  StoreDetail: { storeId: string };
+};

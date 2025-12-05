@@ -4,21 +4,28 @@
     "appVersionSource": "local"
   },
   "build": {
+    "base": {
+      "node": "20.19.0",
+      "env": {
+        "EXPO_NO_DOCTOR": "1",
+        "CI": "1"
+      }
+    },
     "development": {
+      "extends": "base",
       "developmentClient": true,
       "distribution": "internal"
     },
     "preview": {
+      "extends": "base",
       "distribution": "internal",
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease"
-      },
-      "env": {
-        "EXPO_NO_DOCTOR": "1"
       }
     },
     "production": {
+      "extends": "base",
       "android": {
         "buildType": "app-bundle"
       }
