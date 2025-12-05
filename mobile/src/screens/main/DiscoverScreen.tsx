@@ -52,10 +52,11 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('list'); // Default to list - map requires Google Maps API key config
   const [radius, setRadius] = useState(5000); // 5km default
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [mapError, setMapError] = useState(false);
 
   const categories = [
     { id: null, label: t('all') },
@@ -283,53 +284,72 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
 
       {/* View Mode Toggle */}
       {viewMode === 'map' ? (
-        <MapView
-          style={styles.map}
-          provider={PROVIDER_GOOGLE}
-          initialRegion={location ? {
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          } : undefined}
-          showsUserLocation
-          showsMyLocationButton
-        >
-          {sales.map((sale, index) => (
-            <Marker
-              key={sale.id}
-              coordinate={{
-                latitude: Number(sale.latitude) + (index * 0.0001), // Slight offset to prevent overlap
-                longitude: Number(sale.longitude) + (index * 0.0001),
-              }}
-              onPress={() => navigation.navigate('SaleDetail', { saleId: sale.id })}
+        mapError ? (
+          <View style={styles.mapErrorContainer}>
+            <Ionicons name="map-outline" size={64} color="#6B7280" />
+            <Text style={styles.mapErrorTitle}>Map unavailable</Text>
+            <Text style={styles.mapErrorText}>
+              Google Maps is not configured properly.{'\n'}
+              Please use list view to browse sales.
+            </Text>
+            <TouchableOpacity
+              style={styles.switchToListButton}
+              onPress={() => setViewMode('list')}
             >
-              <View style={styles.markerContainer}>
-                <View style={[styles.marker, { backgroundColor: getCategoryColor(sale.category) }]}>
-                  <Text style={styles.markerText}>
-                    {sale.discountPercentage ? `${sale.discountPercentage}%` : '🏷️'}
-                  </Text>
-                </View>
-                <View style={styles.markerArrow} />
-              </View>
-              <Callout 
-                style={styles.callout}
+              <Ionicons name="list" size={20} color="#FFFFFF" />
+              <Text style={styles.switchToListText}>Switch to List View</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <MapView
+            style={styles.map}
+            provider={PROVIDER_GOOGLE}
+            initialRegion={location ? {
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+              latitudeDelta: 0.05,
+              longitudeDelta: 0.05,
+            } : undefined}
+            showsUserLocation
+            showsMyLocationButton
+            onMapReady={() => setMapError(false)}
+          >
+            {sales.map((sale, index) => (
+              <Marker
+                key={sale.id}
+                coordinate={{
+                  latitude: Number(sale.latitude) + (index * 0.0001), // Slight offset to prevent overlap
+                  longitude: Number(sale.longitude) + (index * 0.0001),
+                }}
                 onPress={() => navigation.navigate('SaleDetail', { saleId: sale.id })}
               >
-                <View style={styles.calloutContainer}>
-                  <Text style={styles.calloutTitle} numberOfLines={2}>{sale.title}</Text>
-                  <Text style={styles.calloutStore}>{sale.store?.name || 'Unknown Store'}</Text>
-                  {sale.discountPercentage && (
-                    <View style={styles.calloutDiscountBadge}>
-                      <Text style={styles.calloutDiscount}>{sale.discountPercentage}% OFF</Text>
-                    </View>
-                  )}
-                  <Text style={styles.calloutButton}>Tap to view details →</Text>
+                <View style={styles.markerContainer}>
+                  <View style={[styles.marker, { backgroundColor: getCategoryColor(sale.category) }]}>
+                    <Text style={styles.markerText}>
+                      {sale.discountPercentage ? `${sale.discountPercentage}%` : '🏷️'}
+                    </Text>
+                  </View>
+                  <View style={styles.markerArrow} />
                 </View>
-              </Callout>
-            </Marker>
-          ))}
-        </MapView>
+                <Callout
+                  style={styles.callout}
+                  onPress={() => navigation.navigate('SaleDetail', { saleId: sale.id })}
+                >
+                  <View style={styles.calloutContainer}>
+                    <Text style={styles.calloutTitle} numberOfLines={2}>{sale.title}</Text>
+                    <Text style={styles.calloutStore}>{sale.store?.name || 'Unknown Store'}</Text>
+                    {sale.discountPercentage && (
+                      <View style={styles.calloutDiscountBadge}>
+                        <Text style={styles.calloutDiscount}>{sale.discountPercentage}% OFF</Text>
+                      </View>
+                    )}
+                    <Text style={styles.calloutButton}>Tap to view details →</Text>
+                  </View>
+                </Callout>
+              </Marker>
+            ))}
+          </MapView>
+        )
       ) : (
         <FlatList
           data={sales}
@@ -428,6 +448,41 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  mapErrorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    padding: 24,
+  },
+  mapErrorTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#111827',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  mapErrorText: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  switchToListButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4F46E5',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  switchToListText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   markerContainer: {
     alignItems: 'center',
