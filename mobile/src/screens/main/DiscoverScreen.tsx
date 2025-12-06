@@ -147,7 +147,7 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
         </View>
 
         <Text style={styles.storeName} numberOfLines={1}>
-          {item.store.name}
+          {item.store?.name || 'Unknown Store'}
         </Text>
 
         <View style={styles.cardFooter}>

@@ -21,12 +21,12 @@ import { UpdateStoreDto } from './dto/update-store.dto';
 
 @ApiTags('Stores')
 @ApiBearerAuth('JWT-auth')
-@UseGuards(JwtAuthGuard)
 @Controller('stores')
 export class StoresController {
   constructor(private readonly storesService: StoresService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Register a new store' })
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   async create(@Request() req, @Body() createStoreDto: CreateStoreDto) {
@@ -84,12 +84,14 @@ export class StoresController {
   }
 
   @Get('my-stores')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get current user stores' })
   async getMyStores(@Request() req) {
     return this.storesService.findByOwner(req.user.id);
   }
 
   @Get('my-store')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get current user primary store' })
   async getMyStore(@Request() req) {
     const stores = await this.storesService.findByOwner(req.user.id);
@@ -105,16 +107,16 @@ export class StoresController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, StoreOwnerGuard)
   @ApiOperation({ summary: 'Update store' })
-  @UseGuards(StoreOwnerGuard)
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   async update(@Param('id') id: string, @Body() updateStoreDto: UpdateStoreDto) {
     return this.storesService.update(id, updateStoreDto);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, StoreOwnerGuard)
   @ApiOperation({ summary: 'Delete store' })
-  @UseGuards(StoreOwnerGuard)
   async remove(@Param('id') id: string) {
     return this.storesService.remove(id);
   }

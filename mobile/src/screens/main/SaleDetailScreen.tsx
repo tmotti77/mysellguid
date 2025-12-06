@@ -169,14 +169,16 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 
         <Text style={styles.title}>{sale.title}</Text>
 
-        <TouchableOpacity
-          style={styles.storeContainer}
-          onPress={() => navigation.navigate('StoreDetail', { storeId: sale.storeId })}
-        >
-          <Ionicons name="storefront" size={20} color="#4F46E5" />
-          <Text style={styles.storeName}>{sale.store.name}</Text>
-          <Ionicons name="chevron-forward" size={20} color="#6B7280" />
-        </TouchableOpacity>
+        {sale.store && (
+          <TouchableOpacity
+            style={styles.storeContainer}
+            onPress={() => navigation.navigate('StoreDetail', { storeId: sale.storeId })}
+          >
+            <Ionicons name="storefront" size={20} color="#4F46E5" />
+            <Text style={styles.storeName}>{sale.store.name}</Text>
+            <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+          </TouchableOpacity>
+        )}
 
         {(sale.salePrice || sale.originalPrice) && (
           <View style={styles.priceContainer}>
@@ -202,10 +204,12 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
               Valid until: {new Date(sale.endDate).toLocaleDateString()}
             </Text>
           </View>
-          <View style={styles.detailRow}>
-            <Ionicons name="location" size={20} color="#6B7280" />
-            <Text style={styles.detailText}>{sale.store.address}</Text>
-          </View>
+          {sale.store?.address && (
+            <View style={styles.detailRow}>
+              <Ionicons name="location" size={20} color="#6B7280" />
+              <Text style={styles.detailText}>{sale.store.address}</Text>
+            </View>
+          )}
           <View style={styles.detailRow}>
             <Ionicons name="pricetag" size={20} color="#6B7280" />
             <Text style={styles.detailText}>Category: {sale.category}</Text>

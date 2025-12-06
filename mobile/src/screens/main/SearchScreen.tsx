@@ -107,7 +107,7 @@ const SearchScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.saleTitle} numberOfLines={2}>
           {item.title}
         </Text>
-        <Text style={styles.storeName}>{item.store.name}</Text>
+        <Text style={styles.storeName}>{item.store?.name || 'Unknown Store'}</Text>
         <View style={styles.priceRow}>
           {item.originalPrice && (
             <Text style={styles.originalPrice}>
