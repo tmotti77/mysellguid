@@ -43,10 +43,12 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const fetchSaleDetails = async () => {
     try {
       const response = await salesService.getById(saleId);
+      console.log('Sale data received:', JSON.stringify(response.data, null, 2));
       setSale(response.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching sale:', error);
-      Alert.alert('Error', 'Failed to load sale details');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to load sale details';
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }

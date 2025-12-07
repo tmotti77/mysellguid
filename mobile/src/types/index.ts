@@ -48,17 +48,17 @@ export interface Sale {
   description: string;
   category: string;
   discountPercentage?: number;
-  originalPrice?: number;
-  salePrice?: number;
+  originalPrice?: number | string;
+  salePrice?: number | string;
   currency: string;
   startDate: string;
   endDate: string;
   status: 'active' | 'expired' | 'pending';
   images: string[];
-  store: Store;
+  store?: Store; // Can be null/undefined in some API responses
   storeId: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | string; // API returns string
+  longitude: number | string; // API returns string
   distance?: number;
   views: number;
   clicks: number;

@@ -21,13 +21,22 @@ After thorough code review, I found the codebase is **MORE READY** than expected
 - ✅ **EAS Build**: Configuration ready for standalone apps
 - ✅ **Permissions**: Location and notification permissions configured
 
-## 🎯 YES! You Only Need 2 Environment Variables
+## 🎯 You Need 5 Environment Variables (Updated!)
 
-**The plan was correct!** Your backend is configured to automatically detect and use Render's environment variables:
-- `DATABASE_URL` - Will be used automatically when provided (app.module.ts:41-56)
-- `REDIS_URL` - Will be used automatically when provided (app.module.ts:80-84)
+**Important Update:** The seed endpoint is now secured with `SEED_SECRET`. Here's what you need:
 
-**That's it!** The backend will handle everything else.
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `DATABASE_URL` | **Yes** | PostgreSQL connection (from Render) |
+| `REDIS_URL` | **Yes** | Redis connection (from Render) |
+| `SEED_SECRET` | **Yes** | Secure database seeding in production |
+| `JWT_SECRET` | **Yes** | Token signing (64+ chars) |
+| `JWT_REFRESH_SECRET` | **Yes** | Refresh token signing (64+ chars) |
+
+Generate secrets with:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
 ## 🔴 CRITICAL: What You MUST Do Now
 
@@ -47,13 +56,15 @@ After thorough code review, I found the codebase is **MORE READY** than expected
 3. **Add Security Variables**:
    ```
    NODE_ENV = production
+   SEED_SECRET = <generate-32-character-random-string>
    JWT_SECRET = <generate-64-character-random-string>
    JWT_REFRESH_SECRET = <generate-another-64-character-random-string>
    ```
 
    Generate secure secrets using:
    ```bash
-   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"  # For SEED_SECRET (32 chars)
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"  # For JWT secrets (64 chars)
    ```
 
 ### Step 2: Enable PostGIS Extension (2 minutes)
@@ -91,9 +102,25 @@ For the very first deployment:
 
 ### Step 6: Seed Database with Test Data
 
-1. Visit: https://mysellguid-api.onrender.com/api/seed
-2. You should see success message with created entities
-3. Test credentials: `test@mysellguid.com` / `password123`
+**The seed endpoint is now secured!** You must include the secret:
+
+```bash
+curl -X POST "https://mysellguid-api.onrender.com/api/seed?secret=YOUR_SEED_SECRET"
+```
+
+Replace `YOUR_SEED_SECRET` with the value you set in the SEED_SECRET env var.
+
+Success response:
+```json
+{
+  "message": "Database seeded successfully!",
+  "users": 2,
+  "stores": 5,
+  "sales": 10
+}
+```
+
+Test credentials: `test@mysellguid.com` / `password123`
 
 ## 📱 Mobile App Deployment
 
@@ -148,7 +175,7 @@ Before going live, verify:
 - [ ] Geospatial search returns results
 - [ ] Mobile app connects to production API
 - [ ] CORS only allows your domains
-- [ ] Seed endpoint returns 403 Forbidden
+- [ ] Seed endpoint returns 403 without secret (secured!)
 - [ ] API documentation is accessible
 
 ## 🚨 Important Notes
