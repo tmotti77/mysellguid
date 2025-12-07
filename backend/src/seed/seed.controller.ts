@@ -1,5 +1,5 @@
-import { Controller, Post, UseGuards, ForbiddenException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Post, Query, ForbiddenException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { SeedService } from './seed.service';
 
@@ -15,15 +15,25 @@ export class SeedController {
   @ApiOperation({
     summary: 'Seed database with test data',
     description:
-      'Populates database with test users, stores, and sales in Tel Aviv. ⚠️ DEVELOPMENT ONLY - Clears existing data!',
+      'Populates database with test users, stores, and sales. Requires SEED_SECRET in query param.',
   })
-  async seed() {
-    // Only allow seeding in development environment
-    if (this.configService.get('NODE_ENV') === 'production') {
+  @ApiQuery({ name: 'secret', required: true, description: 'Seed secret key' })
+  async seed(@Query('secret') secret: string) {
+    // Check for seed secret (works in all environments)
+    const seedSecret = this.configService.get('SEED_SECRET');
+
+    // If SEED_SECRET is set, require it
+    if (seedSecret && secret !== seedSecret) {
+      throw new ForbiddenException('Invalid seed secret');
+    }
+
+    // If no SEED_SECRET is set and we're in production, block
+    if (!seedSecret && this.configService.get('NODE_ENV') === 'production') {
       throw new ForbiddenException(
-        'Database seeding is disabled in production environment',
+        'Database seeding requires SEED_SECRET in production',
       );
     }
+
     const result = await this.seedService.seed();
     return {
       message: 'Database seeded successfully!',
