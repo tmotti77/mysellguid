@@ -203,7 +203,7 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           <View style={styles.detailRow}>
             <Ionicons name="calendar" size={20} color="#6B7280" />
             <Text style={styles.detailText}>
-              Valid until: {new Date(sale.endDate).toLocaleDateString()}
+              Valid until: {sale.endDate ? new Date(sale.endDate).toLocaleDateString() : 'N/A'}
             </Text>
           </View>
           {sale.store?.address && (
