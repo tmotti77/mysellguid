@@ -21,17 +21,6 @@ import {
 } from 'lucide-react';
 import { Sale } from '@/types';
 
-interface Sale {
-    id: string;
-    title: string;
-    description?: string;
-    category?: string;
-    discountPercentage?: number;
-    originalPrice?: number;
-    salePrice?: number;
-    endDate: string;
-}
-
 export default function SalesPage() {
     const [sales, setSales] = useState<Sale[]>([]);
     const [loading, setLoading] = useState(true);
@@ -243,7 +232,7 @@ export default function SalesPage() {
                                 </div>
                                 {/* Status Badge */}
                                 <div className={`absolute top-3 right-3 badge ${sale.status === 'active' ? 'badge-success' :
-                                        sale.status === 'expired' ? 'badge-error' : 'badge-warning'
+                                    sale.status === 'expired' ? 'badge-error' : 'badge-warning'
                                     }`}>
                                     {sale.status}
                                 </div>
@@ -384,7 +373,7 @@ export default function SalesPage() {
                                 {/* Status & Actions */}
                                 <div className="flex items-center gap-3">
                                     <span className={`badge ${sale.status === 'active' ? 'badge-success' :
-                                            sale.status === 'expired' ? 'badge-error' : 'badge-warning'
+                                        sale.status === 'expired' ? 'badge-error' : 'badge-warning'
                                         }`}>
                                         {sale.status}
                                     </span>
