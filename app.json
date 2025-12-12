@@ -1,3 +1,69 @@
 {
-  "expo": {}
+  "expo": {
+    "name": "MySellGuid",
+    "slug": "mysellguid",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#4F46E5"
+    },
+    "assetBundlePatterns": [
+      "mobile/**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mysellguid.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "MySellGuid needs your location to show nearby sales and stores.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "MySellGuid needs your location to notify you about nearby sales even when the app is in the background."
+      }
+    },
+    "android": {
+      "package": "com.mysellguid.app",
+      "newArchEnabled": true,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "NOTIFICATIONS",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBRSlKoC5KO0bkP-i7r6tWomRqE-raW9Z8"
+        }
+      }
+    },
+    "notification": {
+      "color": "#EF4444",
+      "androidMode": "default",
+      "androidCollapsedTitle": "{{unread_notifications}} new notifications"
+    },
+    "web": {},
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow MySellGuid to use your location to show nearby sales."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#EF4444"
+        }
+      ]
+    ],
+    "extra": {
+      "apiUrl": "https://mysellguid-api.onrender.com/api",
+      "eas": {
+        "projectId": "92697039-8e9f-4c84-a449-4d68d30b2bb7"
+      }
+    }
+  }
 }
