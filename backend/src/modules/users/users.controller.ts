@@ -14,6 +14,7 @@ import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger'
 import { UsersService } from './users.service';
 import { UserSavedSalesService } from './user-saved-sales.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UpdateUserDto, UserPreferencesDto, UpdateLocationDto } from './dto';
 
 @ApiTags('Users')
 @ApiBearerAuth('JWT-auth')
@@ -39,19 +40,19 @@ export class UsersController {
 
   @Patch('me')
   @ApiOperation({ summary: 'Update current user profile' })
-  async update(@Request() req, @Body() updateData: any) {
+  async update(@Request() req, @Body() updateData: UpdateUserDto) {
     return this.usersService.update(req.user.id, updateData);
   }
 
   @Patch('me/preferences')
   @ApiOperation({ summary: 'Update user preferences' })
-  async updatePreferences(@Request() req, @Body() preferences: any) {
+  async updatePreferences(@Request() req, @Body() preferences: UserPreferencesDto) {
     return this.usersService.updatePreferences(req.user.id, preferences);
   }
 
   @Patch('me/location')
   @ApiOperation({ summary: 'Update user default location' })
-  async updateLocation(@Request() req, @Body() location: { latitude: number; longitude: number }) {
+  async updateLocation(@Request() req, @Body() location: UpdateLocationDto) {
     return this.usersService.updateLocation(req.user.id, location.latitude, location.longitude);
   }
 

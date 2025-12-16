@@ -48,9 +48,6 @@ const SearchScreen: React.FC<Props> = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  // Debug log
-  console.log('SearchScreen rendered');
-
   // Debounced search
   useEffect(() => {
     try {

@@ -301,4 +301,41 @@ export class UploadService {
     // Return medium-sized URLs (good balance for mobile/web)
     return uploads.map((upload) => upload.medium);
   }
+
+  /**
+   * Upload base64 encoded image (for user reports)
+   */
+  async uploadBase64Image(
+    base64Data: string,
+    folder: string = 'reports',
+  ): Promise<{ url: string; thumbnail: string }> {
+    const base64Match = base64Data.match(/^data:image\/(\w+);base64,(.+)$/);
+    let buffer: Buffer;
+    let mimeType: string;
+
+    if (base64Match) {
+      mimeType = `image/${base64Match[1]}`;
+      buffer = Buffer.from(base64Match[2], 'base64');
+    } else {
+      buffer = Buffer.from(base64Data, 'base64');
+      mimeType = 'image/jpeg';
+    }
+
+    const fakeFile: MulterFile = {
+      fieldname: 'image',
+      originalname: 'report.jpg',
+      encoding: '7bit',
+      mimetype: mimeType,
+      size: buffer.length,
+      buffer: buffer,
+    };
+
+    this.validateImage(fakeFile);
+
+    const result = await this.uploadImage(fakeFile, folder);
+    return {
+      url: result.medium,
+      thumbnail: result.thumbnail,
+    };
+  }
 }

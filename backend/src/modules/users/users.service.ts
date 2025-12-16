@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { UserPreferencesDto } from './dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -60,8 +61,8 @@ export class UsersService {
     return this.update(userId, { fcmToken });
   }
 
-  async updatePreferences(userId: string, preferences: any): Promise<User> {
-    return this.update(userId, { preferences });
+  async updatePreferences(userId: string, preferences: UserPreferencesDto): Promise<User> {
+    return this.update(userId, { preferences: preferences as User['preferences'] });
   }
 
   async updateLocation(userId: string, latitude: number, longitude: number): Promise<User> {

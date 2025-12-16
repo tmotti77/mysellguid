@@ -14,6 +14,7 @@ import { FirebaseModule } from './modules/firebase/firebase.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { BookmarksModule } from './modules/bookmarks/bookmarks.module';
+import { UserReportsModule } from './modules/user-reports/user-reports.module';
 import { SeedModule } from './seed/seed.module';
 import { HealthController } from './health.controller';
 import { User } from './modules/users/entities/user.entity';
@@ -107,6 +108,7 @@ import { User } from './modules/users/entities/user.entity';
     NotificationsModule,
     UploadModule,
     BookmarksModule,
+    UserReportsModule,
     SeedModule,
 
     // TypeORM for health check

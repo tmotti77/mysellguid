@@ -43,7 +43,6 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const fetchSaleDetails = async () => {
     try {
       const response = await salesService.getById(saleId);
-      console.log('Sale data received:', JSON.stringify(response.data, null, 2));
       setSale(response.data);
     } catch (error: any) {
       console.error('Error fetching sale:', error);
