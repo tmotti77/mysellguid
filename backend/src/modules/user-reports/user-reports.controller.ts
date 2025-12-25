@@ -18,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { UserReportsService } from './user-reports.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from '../auth/guards/admin.guard';
 import { CreateReportDto, ApproveReportDto, RejectReportDto } from './dto';
 
 @ApiTags('User Reports')
@@ -64,9 +65,9 @@ export class UserReportsController {
   }
 
   @Get('pending')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Get pending reports for moderation (admin)' })
+  @ApiOperation({ summary: 'Get pending reports for moderation (admin only)' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'offset', required: false, type: Number })
   async getPendingReports(
@@ -88,9 +89,9 @@ export class UserReportsController {
   }
 
   @Patch(':id/approve')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Approve a pending report (admin)' })
+  @ApiOperation({ summary: 'Approve a pending report (admin only)' })
   @ApiParam({ name: 'id', description: 'Report ID' })
   async approveReport(
     @Request() req,
@@ -106,9 +107,9 @@ export class UserReportsController {
   }
 
   @Patch(':id/reject')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Reject a pending report (admin)' })
+  @ApiOperation({ summary: 'Reject a pending report (admin only)' })
   @ApiParam({ name: 'id', description: 'Report ID' })
   async rejectReport(
     @Request() req,

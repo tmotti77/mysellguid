@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { SalesService } from '../sales.service';
 import { StoresService } from '../../stores/stores.service';
+import { UserRole } from '../../users/entities/user.entity';
 
 @Injectable()
 export class SaleOwnerGuard implements CanActivate {
@@ -25,7 +26,7 @@ export class SaleOwnerGuard implements CanActivate {
     }
 
     // Check if user is admin
-    if (request.user.role === 'ADMIN') {
+    if (request.user.role === UserRole.ADMIN) {
       return true;
     }
 

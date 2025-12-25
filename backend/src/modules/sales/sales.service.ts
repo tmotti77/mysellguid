@@ -291,7 +291,9 @@ export class SalesService {
     const query = this.salesRepository
       .createQueryBuilder('sale')
       .leftJoinAndSelect('sale.store', 'store')
-      .where('sale.status = :status', { status: SaleStatus.ACTIVE });
+      .where('sale.status = :status', { status: SaleStatus.ACTIVE })
+      .andWhere('sale.startDate <= :now', { now: new Date() })
+      .andWhere('sale.endDate >= :now', { now: new Date() });
 
     if (searchTerm) {
       query.andWhere(

@@ -16,19 +16,35 @@ import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger'
 import { SalesService } from './sales.service';
 import { SaleStatus } from './entities/sale.entity';
 import { SaleOwnerGuard } from './guards/sale-owner.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
+import { StoresService } from '../stores/stores.service';
+import { ForbiddenException } from '@nestjs/common';
+import { UserRole } from '../users/entities/user.entity';
 
 @ApiTags('Sales')
 @ApiBearerAuth('JWT-auth')
 @Controller('sales')
 export class SalesController {
-  constructor(private readonly salesService: SalesService) {}
+  constructor(
+    private readonly salesService: SalesService,
+    private readonly storesService: StoresService,
+  ) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Create a new sale' })
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   async create(@Request() req, @Body() createSaleDto: CreateSaleDto) {
+    // Validate that the user owns the store they're creating a sale for
+    if (createSaleDto.storeId) {
+      const store = await this.storesService.findOne(createSaleDto.storeId);
+      if (store.ownerId !== req.user.id && req.user.role !== UserRole.ADMIN) {
+        throw new ForbiddenException('You can only create sales for your own stores');
+      }
+    }
+
     const saleData: Partial<any> = { ...createSaleDto };
 
     if (createSaleDto.startDate) {
@@ -139,7 +155,7 @@ export class SalesController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update sale' })
-  @UseGuards(SaleOwnerGuard)
+  @UseGuards(JwtAuthGuard, SaleOwnerGuard)
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   async update(@Param('id') id: string, @Body() updateSaleDto: UpdateSaleDto) {
     const updateData: Partial<any> = { ...updateSaleDto };
@@ -157,7 +173,7 @@ export class SalesController {
 
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update sale status' })
-  @UseGuards(SaleOwnerGuard)
+  @UseGuards(JwtAuthGuard, SaleOwnerGuard)
   async updateStatus(@Param('id') id: string, @Body() body: { status: SaleStatus }) {
     return this.salesService.updateStatus(id, body.status);
   }
@@ -185,7 +201,7 @@ export class SalesController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete sale' })
-  @UseGuards(SaleOwnerGuard)
+  @UseGuards(JwtAuthGuard, SaleOwnerGuard)
   async remove(@Param('id') id: string) {
     return this.salesService.remove(id);
   }

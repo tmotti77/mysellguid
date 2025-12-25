@@ -113,9 +113,9 @@ export const envConfig: EnvConfig = {
 
   jwt: {
     secret: process.env.JWT_SECRET || 'your-jwt-secret',
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+    expiresIn: process.env.JWT_EXPIRES_IN || process.env.JWT_EXPIRATION || '7d',
     refreshSecret: process.env.JWT_REFRESH_SECRET || 'your-refresh-secret',
-    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
+    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || process.env.JWT_REFRESH_EXPIRATION || '30d',
   },
 
   storage: {

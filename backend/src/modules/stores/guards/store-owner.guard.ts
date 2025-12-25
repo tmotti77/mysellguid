@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { StoresService } from '../stores.service';
+import { UserRole } from '../../users/entities/user.entity';
 
 @Injectable()
 export class StoreOwnerGuard implements CanActivate {
@@ -21,7 +22,7 @@ export class StoreOwnerGuard implements CanActivate {
     }
 
     // Check if user is admin
-    if (request.user.role === 'ADMIN') {
+    if (request.user.role === UserRole.ADMIN) {
       return true;
     }
 

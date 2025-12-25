@@ -112,7 +112,7 @@ export class UserReportsService {
       return true;
     }
 
-    if (aiExtraction?.confidence && aiExtraction.confidence > 90) {
+    if (aiExtraction?.confidence && aiExtraction.confidence > 0.9) {
       if (stats.trustLevel === TrustLevel.REGULAR) {
         return true;
       }

@@ -32,7 +32,7 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_REFRESH_SECRET'),
-      expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN') || '30d',
+      expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN') || this.configService.get('JWT_REFRESH_EXPIRATION') || '30d',
     });
 
     // Store refresh token hash in database
