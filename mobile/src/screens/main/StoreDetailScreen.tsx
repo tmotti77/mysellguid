@@ -195,7 +195,7 @@ const StoreDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           <View style={styles.detailText}>
             <Text style={styles.detailLabel}>Rating</Text>
             <Text style={styles.detailValue}>
-              {(store.rating ?? 0).toFixed(1)} ({store.reviewCount ?? 0} reviews)
+              {Number(store.rating ?? 0).toFixed(1)} ({store.reviewCount ?? 0} reviews)
             </Text>
           </View>
         </View>
