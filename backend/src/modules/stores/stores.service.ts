@@ -72,7 +72,6 @@ export class StoresService {
 
   async findAll(limit: number = 20, offset: number = 0): Promise<Store[]> {
     return this.storesRepository.find({
-      relations: ['owner'],
       order: { createdAt: 'DESC' },
       take: limit,
       skip: offset,
