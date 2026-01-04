@@ -71,31 +71,61 @@ export class StoresService {
   }
 
   async findAll(limit: number = 20, offset: number = 0): Promise<Store[]> {
-    return this.storesRepository.find({
-      order: { createdAt: 'DESC' },
-      take: limit,
-      skip: offset,
-    });
+    // Use raw query to avoid geography column serialization issues
+    const stores = await this.storesRepository.query(`
+      SELECT
+        id, name, description, category, logo, "coverImage",
+        email, "phoneNumber", website, "instagramHandle", "facebookPage",
+        address, city, "postalCode", country,
+        latitude, longitude,
+        "openingHours", "ownerId", "isVerified", "isActive",
+        "totalSales", views, rating, "reviewCount",
+        "createdAt", "updatedAt"
+      FROM stores
+      ORDER BY "createdAt" DESC
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
+    return stores;
   }
 
   async findOne(id: string): Promise<Store> {
-    const store = await this.storesRepository.findOne({
-      where: { id },
-      relations: ['owner'],
-    });
+    // Use raw query to avoid geography column serialization issues
+    const stores = await this.storesRepository.query(`
+      SELECT
+        s.id, s.name, s.description, s.category, s.logo, s."coverImage",
+        s.email, s."phoneNumber", s.website, s."instagramHandle", s."facebookPage",
+        s.address, s.city, s."postalCode", s.country,
+        s.latitude, s.longitude,
+        s."openingHours", s."ownerId", s."isVerified", s."isActive",
+        s."totalSales", s.views, s.rating, s."reviewCount",
+        s."createdAt", s."updatedAt"
+      FROM stores s
+      WHERE s.id = $1
+    `, [id]);
 
-    if (!store) {
+    if (!stores || stores.length === 0) {
       throw new NotFoundException(`Store with ID ${id} not found`);
     }
 
-    return store;
+    return stores[0];
   }
 
   async findByOwner(ownerId: string): Promise<Store[]> {
-    return this.storesRepository.find({
-      where: { ownerId },
-      order: { createdAt: 'DESC' },
-    });
+    // Use raw query to avoid geography column serialization issues
+    const stores = await this.storesRepository.query(`
+      SELECT
+        id, name, description, category, logo, "coverImage",
+        email, "phoneNumber", website, "instagramHandle", "facebookPage",
+        address, city, "postalCode", country,
+        latitude, longitude,
+        "openingHours", "ownerId", "isVerified", "isActive",
+        "totalSales", views, rating, "reviewCount",
+        "createdAt", "updatedAt"
+      FROM stores
+      WHERE "ownerId" = $1
+      ORDER BY "createdAt" DESC
+    `, [ownerId]);
+    return stores;
   }
 
   async findNearby(
@@ -157,21 +187,36 @@ export class StoresService {
   }
 
   async search(searchTerm: string, category?: string): Promise<Store[]> {
-    const query = this.storesRepository
-      .createQueryBuilder('store')
-      .where('store.isActive = :isActive', { isActive: true });
+    // Use raw query to avoid geography column serialization issues
+    let query = `
+      SELECT
+        id, name, description, category, logo, "coverImage",
+        email, "phoneNumber", website, "instagramHandle", "facebookPage",
+        address, city, "postalCode", country,
+        latitude, longitude,
+        "openingHours", "ownerId", "isVerified", "isActive",
+        "totalSales", views, rating, "reviewCount",
+        "createdAt", "updatedAt"
+      FROM stores
+      WHERE "isActive" = true
+    `;
+    const params: any[] = [];
+    let paramIndex = 1;
 
     if (searchTerm) {
-      query.andWhere(
-        '(LOWER(store.name) LIKE LOWER(:searchTerm) OR LOWER(store.description) LIKE LOWER(:searchTerm))',
-        { searchTerm: `%${searchTerm}%` },
-      );
+      query += ` AND (LOWER(name) LIKE LOWER($${paramIndex}) OR LOWER(description) LIKE LOWER($${paramIndex}))`;
+      params.push(`%${searchTerm}%`);
+      paramIndex++;
     }
 
     if (category) {
-      query.andWhere('store.category = :category', { category });
+      query += ` AND category = $${paramIndex}`;
+      params.push(category);
+      paramIndex++;
     }
 
-    return query.orderBy('store.rating', 'DESC').getMany();
+    query += ` ORDER BY rating DESC`;
+
+    return this.storesRepository.query(query, params);
   }
 }
