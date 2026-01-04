@@ -50,9 +50,9 @@ export class StoresController {
     type: Number,
     description: 'Number of items to skip (default: 0)',
   })
-  async findAll(@Query('limit') limit: number = 20, @Query('offset') offset: number = 0) {
-    const safeLimit = Math.min(Number(limit), 100); // Enforce max limit
-    const safeOffset = Math.max(Number(offset), 0); // Ensure non-negative
+  async findAll(@Query('limit') limit?: string, @Query('offset') offset?: string) {
+    const safeLimit = Math.min(Number(limit) || 20, 100); // Default 20, max 100
+    const safeOffset = Math.max(Number(offset) || 0, 0); // Default 0, min 0
 
     return this.storesService.findAll(safeLimit, safeOffset);
   }
