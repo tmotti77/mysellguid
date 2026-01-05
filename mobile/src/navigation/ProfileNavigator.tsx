@@ -3,6 +3,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { ProfileStackParamList } from '../types';
 import ProfileScreen from '../screens/main/ProfileScreen';
 import EditProfileScreen from '../screens/main/EditProfileScreen';
+import CreateSaleScreen from '../screens/main/CreateSaleScreen';
 
 const Stack = createStackNavigator<ProfileStackParamList>();
 
@@ -20,6 +21,14 @@ const ProfileNavigator = () => {
         options={{
           title: 'Edit Profile',
           headerBackTitleVisible: false,
+        }}
+      />
+      <Stack.Screen
+        name="CreateSale"
+        component={CreateSaleScreen}
+        options={{
+          headerShown: false,
+          presentation: 'modal',
         }}
       />
     </Stack.Navigator>

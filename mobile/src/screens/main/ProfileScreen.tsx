@@ -61,6 +61,15 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
 
+        {/* Post Sale Button */}
+        <TouchableOpacity
+          style={styles.postSaleButton}
+          onPress={() => navigation.navigate('CreateSale')}
+        >
+          <Ionicons name="megaphone-outline" size={24} color="#FFFFFF" />
+          <Text style={styles.postSaleText}>Post a Sale</Text>
+        </TouchableOpacity>
+
         {/* Menu Items */}
         <View style={styles.section}>
           <TouchableOpacity
@@ -179,6 +188,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     marginTop: 4,
+  },
+  postSaleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4F46E5',
+    padding: 16,
+    marginTop: 16,
+    marginHorizontal: 16,
+    borderRadius: 12,
+    gap: 8,
+  },
+  postSaleText: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   section: {
     backgroundColor: '#FFFFFF',
