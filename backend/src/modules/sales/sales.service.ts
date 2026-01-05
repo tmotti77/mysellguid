@@ -296,9 +296,9 @@ export class SalesService {
       .andWhere('sale.endDate >= :now', { now: new Date() });
 
     if (searchTerm) {
-      // Search in title, description, category, and store name
+      // Search in title, description, category, and store name (with null safety)
       query.andWhere(
-        '(LOWER(sale.title) LIKE LOWER(:searchTerm) OR LOWER(sale.description) LIKE LOWER(:searchTerm) OR LOWER(sale.category) LIKE LOWER(:searchTerm) OR LOWER(store.name) LIKE LOWER(:searchTerm))',
+        '(LOWER(sale.title) LIKE LOWER(:searchTerm) OR LOWER(sale.description) LIKE LOWER(:searchTerm) OR LOWER(sale.category) LIKE LOWER(:searchTerm) OR LOWER(COALESCE(store.name, \'\')) LIKE LOWER(:searchTerm))',
         { searchTerm: `%${searchTerm}%` },
       );
     }
