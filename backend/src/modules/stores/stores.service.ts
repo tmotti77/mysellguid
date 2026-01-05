@@ -12,62 +12,84 @@ export class StoresService {
   ) {}
 
   async create(storeData: Partial<Store>): Promise<Store> {
-    // Create PostGIS POINT from latitude and longitude (WKT format)
-    if (storeData.latitude && storeData.longitude) {
-      storeData.location = `POINT(${storeData.longitude} ${storeData.latitude})`;
-    } else if (storeData.address && storeData.city) {
-      // Geocode address using Google Maps API
-      try {
-        const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-        if (apiKey) {
-          const address = `${storeData.address}, ${storeData.city}, ${storeData.country || 'Israel'}`;
-          const response = await axios.get(
-            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`,
-          );
+    // Ensure we have coordinates
+    let lat = storeData.latitude;
+    let lng = storeData.longitude;
 
-          if (response.data.results && response.data.results.length > 0) {
-            const { lat, lng } = response.data.results[0].geometry.location;
-            storeData.latitude = lat;
-            storeData.longitude = lng;
-            storeData.location = `POINT(${lng} ${lat})`;
-          } else {
-            // Fallback if geocoding fails to find results
-            console.warn(`Geocoding failed for address: ${address}`);
-            const defaultLat = 32.0853;
-            const defaultLng = 34.7818;
-            storeData.latitude = defaultLat;
-            storeData.longitude = defaultLng;
-            storeData.location = `POINT(${defaultLng} ${defaultLat})`;
+    if (!lat || !lng) {
+      if (storeData.address && storeData.city) {
+        // Try to geocode address using Google Maps API
+        try {
+          const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+          if (apiKey) {
+            const address = `${storeData.address}, ${storeData.city}, ${storeData.country || 'Israel'}`;
+            const response = await axios.get(
+              `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`,
+            );
+
+            if (response.data.results && response.data.results.length > 0) {
+              lat = response.data.results[0].geometry.location.lat;
+              lng = response.data.results[0].geometry.location.lng;
+            }
           }
-        } else {
-          // Fallback if no API key
-          console.warn('GOOGLE_MAPS_API_KEY not configured');
-          const defaultLat = 32.0853;
-          const defaultLng = 34.7818;
-          storeData.latitude = defaultLat;
-          storeData.longitude = defaultLng;
-          storeData.location = `POINT(${defaultLng} ${defaultLat})`;
+        } catch (error) {
+          console.error('Geocoding error:', error);
         }
-      } catch (error) {
-        console.error('Geocoding error:', error);
-        // Fallback on error
-        const defaultLat = 32.0853;
-        const defaultLng = 34.7818;
-        storeData.latitude = defaultLat;
-        storeData.longitude = defaultLng;
-        storeData.location = `POINT(${defaultLng} ${defaultLat})`;
       }
-    } else {
-      // Final fallback
-      const defaultLat = 32.0853;
-      const defaultLng = 34.7818;
-      storeData.latitude = defaultLat;
-      storeData.longitude = defaultLng;
-      storeData.location = `POINT(${defaultLng} ${defaultLat})`;
+
+      // Fallback to Tel Aviv center if no coordinates
+      if (!lat || !lng) {
+        lat = 32.0853;
+        lng = 34.7818;
+        console.warn('Using default Tel Aviv coordinates for store');
+      }
     }
 
-    const store = this.storesRepository.create(storeData);
-    return this.storesRepository.save(store);
+    // Use raw SQL to properly insert with PostGIS geography column
+    try {
+      const result = await this.storesRepository.query(
+        `INSERT INTO stores (
+          name, description, category, address, city, country, "postalCode",
+          latitude, longitude, location,
+          "phoneNumber", email, website, "instagramHandle", "facebookPage",
+          logo, "coverImage", "openingHours", "ownerId", "isVerified", "isActive"
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7,
+          $8, $9, ST_SetSRID(ST_Point($10, $11), 4326)::geography,
+          $12, $13, $14, $15, $16,
+          $17, $18, $19, $20, $21, $22
+        ) RETURNING *`,
+        [
+          storeData.name,
+          storeData.description || null,
+          storeData.category || 'other',
+          storeData.address,
+          storeData.city,
+          storeData.country || 'Israel',
+          storeData.postalCode || null,
+          lat,
+          lng,
+          lng, // longitude first for ST_Point
+          lat, // latitude second for ST_Point
+          storeData.phoneNumber || null,
+          storeData.email || null,
+          storeData.website || null,
+          storeData.instagramHandle || null,
+          storeData.facebookPage || null,
+          storeData.logo || null,
+          storeData.coverImage || null,
+          storeData.openingHours ? JSON.stringify(storeData.openingHours) : null,
+          storeData.ownerId,
+          false, // isVerified - new stores are not verified by default
+          true,  // isActive
+        ],
+      );
+
+      return result[0];
+    } catch (error) {
+      console.error('Store creation error:', error);
+      throw error;
+    }
   }
 
   async findAll(limit: number = 20, offset: number = 0): Promise<Store[]> {

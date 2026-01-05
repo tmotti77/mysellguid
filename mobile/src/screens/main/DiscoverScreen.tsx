@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,12 @@ import {
   RefreshControl,
   ScrollView,
   TextInput,
+  Platform,
 } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, Callout } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE, Callout, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { salesService } from '../../services/api';
 import { Sale } from '../../types';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -48,6 +50,7 @@ const getCategoryColor = (category?: string): string => {
 
 const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
   const { t } = useI18n();
+  const insets = useSafeAreaInsets();
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +60,32 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [mapError, setMapError] = useState(false);
+
+  // Group nearby sales to prevent marker overlap - create clusters
+  const clusteredSales = useMemo(() => {
+    if (!sales.length) return [];
+
+    const CLUSTER_THRESHOLD = 0.0005; // ~50 meters
+    const clusters: { sales: Sale[]; lat: number; lng: number }[] = [];
+
+    sales.forEach((sale) => {
+      const lat = Number(sale.latitude);
+      const lng = Number(sale.longitude);
+
+      // Find existing cluster nearby
+      const existingCluster = clusters.find(
+        (c) => Math.abs(c.lat - lat) < CLUSTER_THRESHOLD && Math.abs(c.lng - lng) < CLUSTER_THRESHOLD
+      );
+
+      if (existingCluster) {
+        existingCluster.sales.push(sale);
+      } else {
+        clusters.push({ sales: [sale], lat, lng });
+      }
+    });
+
+    return clusters;
+  }, [sales]);
 
   const categories = [
     { id: null, label: t('all') },
@@ -314,40 +343,72 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
             showsMyLocationButton
             onMapReady={() => setMapError(false)}
           >
-            {sales.map((sale, index) => (
-              <Marker
-                key={sale.id}
-                coordinate={{
-                  latitude: Number(sale.latitude) + (index * 0.0001), // Slight offset to prevent overlap
-                  longitude: Number(sale.longitude) + (index * 0.0001),
-                }}
-                onPress={() => navigation.navigate('SaleDetail', { saleId: sale.id })}
-              >
-                <View style={styles.markerContainer}>
-                  <View style={[styles.marker, { backgroundColor: getCategoryColor(sale.category) }]}>
-                    <Text style={styles.markerText}>
-                      {sale.discountPercentage ? `${sale.discountPercentage}%` : '🏷️'}
-                    </Text>
-                  </View>
-                  <View style={styles.markerArrow} />
-                </View>
-                <Callout
-                  style={styles.callout}
-                  onPress={() => navigation.navigate('SaleDetail', { saleId: sale.id })}
+            {clusteredSales.map((cluster, clusterIndex) => {
+              const isCluster = cluster.sales.length > 1;
+              const primarySale = cluster.sales[0];
+              const maxDiscount = Math.max(...cluster.sales.map(s => s.discountPercentage || 0));
+
+              return (
+                <Marker
+                  key={`cluster-${clusterIndex}`}
+                  coordinate={{
+                    latitude: cluster.lat,
+                    longitude: cluster.lng,
+                  }}
+                  onPress={() => {
+                    if (isCluster) {
+                      // For clusters, navigate to the first sale or show a list
+                      Alert.alert(
+                        `${cluster.sales.length} Sales Here`,
+                        cluster.sales.map(s => `• ${s.title}`).join('\n'),
+                        [
+                          ...cluster.sales.slice(0, 3).map(sale => ({
+                            text: sale.title?.substring(0, 25) + '...',
+                            onPress: () => navigation.navigate('SaleDetail', { saleId: sale.id }),
+                          })),
+                          { text: 'Cancel', style: 'cancel' as const },
+                        ]
+                      );
+                    } else {
+                      navigation.navigate('SaleDetail', { saleId: primarySale.id });
+                    }
+                  }}
                 >
-                  <View style={styles.calloutContainer}>
-                    <Text style={styles.calloutTitle} numberOfLines={2}>{sale.title}</Text>
-                    <Text style={styles.calloutStore}>{sale.store?.name || 'Unknown Store'}</Text>
-                    {sale.discountPercentage && (
-                      <View style={styles.calloutDiscountBadge}>
-                        <Text style={styles.calloutDiscount}>{sale.discountPercentage}% OFF</Text>
-                      </View>
-                    )}
-                    <Text style={styles.calloutButton}>Tap to view details →</Text>
+                  <View style={styles.markerContainer}>
+                    <View style={[
+                      styles.marker,
+                      { backgroundColor: isCluster ? '#111827' : getCategoryColor(primarySale.category) },
+                      isCluster && styles.clusterMarker
+                    ]}>
+                      <Text style={styles.markerText}>
+                        {isCluster ? `${cluster.sales.length}` : (maxDiscount ? `${maxDiscount}%` : '🏷️')}
+                      </Text>
+                    </View>
+                    <View style={[
+                      styles.markerArrow,
+                      isCluster && { borderTopColor: '#111827' }
+                    ]} />
                   </View>
-                </Callout>
-              </Marker>
-            ))}
+                  {!isCluster && (
+                    <Callout
+                      style={styles.callout}
+                      onPress={() => navigation.navigate('SaleDetail', { saleId: primarySale.id })}
+                    >
+                      <View style={styles.calloutContainer}>
+                        <Text style={styles.calloutTitle} numberOfLines={2}>{primarySale.title}</Text>
+                        <Text style={styles.calloutStore}>{primarySale.store?.name || 'Unknown Store'}</Text>
+                        {primarySale.discountPercentage && (
+                          <View style={styles.calloutDiscountBadge}>
+                            <Text style={styles.calloutDiscount}>{primarySale.discountPercentage}% OFF</Text>
+                          </View>
+                        )}
+                        <Text style={styles.calloutButton}>Tap to view details →</Text>
+                      </View>
+                    </Callout>
+                  )}
+                </Marker>
+              );
+            })}
           </MapView>
         )
       ) : (
@@ -372,7 +433,7 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
 
 
       {/* Sale Count */}
-      <View style={styles.countBadge}>
+      <View style={[styles.countBadge, { bottom: 20 + (Platform.OS === 'android' ? Math.max(insets.bottom, 10) : 0) }]}>
         <Text style={styles.countText}>{sales.length} {t('nearbyDeals')}</Text>
       </View>
     </View>
@@ -501,6 +562,13 @@ const styles = StyleSheet.create({
     elevation: 5,
     minWidth: 40,
     alignItems: 'center',
+  },
+  clusterMarker: {
+    minWidth: 44,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 22,
+    borderWidth: 3,
   },
   markerText: {
     color: '#FFFFFF',

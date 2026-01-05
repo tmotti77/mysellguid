@@ -1,6 +1,8 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MainTabParamList } from '../types';
 import DiscoverNavigator from './DiscoverNavigator';
 import SearchNavigator from './SearchNavigator';
@@ -10,6 +12,11 @@ import ProfileNavigator from './ProfileNavigator';
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 const MainNavigator = () => {
+  const insets = useSafeAreaInsets();
+
+  // Calculate tab bar height based on safe area
+  const tabBarHeight = 60 + (Platform.OS === 'android' ? Math.max(insets.bottom, 10) : insets.bottom);
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -34,9 +41,9 @@ const MainNavigator = () => {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
           borderTopColor: '#E5E7EB',
-          paddingBottom: 5,
+          paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 10) : insets.bottom,
           paddingTop: 5,
-          height: 60,
+          height: tabBarHeight,
         },
         headerShown: false,
       })}
