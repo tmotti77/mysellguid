@@ -292,13 +292,13 @@ export class SalesService {
       .createQueryBuilder('sale')
       .leftJoinAndSelect('sale.store', 'store')
       .where('sale.status = :status', { status: SaleStatus.ACTIVE })
-      .andWhere('sale.startDate <= :now', { now: new Date() })
-      .andWhere('sale.endDate >= :now', { now: new Date() });
+      .andWhere('sale."startDate" <= NOW()')
+      .andWhere('sale."endDate" >= NOW()');
 
     if (searchTerm) {
-      // Search in title, description, category, and store name (with null safety)
+      // Search in title, description, category, and store name (with null safety for all fields)
       query.andWhere(
-        '(LOWER(sale.title) LIKE LOWER(:searchTerm) OR LOWER(sale.description) LIKE LOWER(:searchTerm) OR LOWER(sale.category) LIKE LOWER(:searchTerm) OR LOWER(COALESCE(store.name, \'\')) LIKE LOWER(:searchTerm))',
+        '(LOWER(COALESCE(sale.title, \'\')) LIKE LOWER(:searchTerm) OR LOWER(COALESCE(sale.description, \'\')) LIKE LOWER(:searchTerm) OR LOWER(COALESCE(sale.category, \'\')) LIKE LOWER(:searchTerm) OR LOWER(COALESCE(store.name, \'\')) LIKE LOWER(:searchTerm))',
         { searchTerm: `%${searchTerm}%` },
       );
     }
