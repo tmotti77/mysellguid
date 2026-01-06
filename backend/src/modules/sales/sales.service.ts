@@ -288,80 +288,44 @@ export class SalesService {
       limit?: number;
     },
   ): Promise<Sale[]> {
-    // Use raw SQL for reliable search with store name
-    let query = `
-      SELECT
-        sale.id,
-        sale.title,
-        sale.description,
-        sale.category,
-        sale."discountPercentage",
-        sale."originalPrice",
-        sale."salePrice",
-        sale.currency,
-        sale."startDate",
-        sale."endDate",
-        sale.status,
-        COALESCE(string_to_array(NULLIF(sale.images, ''), ','), ARRAY[]::text[]) as images,
-        sale."storeId",
-        sale.latitude,
-        sale.longitude,
-        sale.source,
-        sale.views,
-        sale.clicks,
-        sale.shares,
-        sale.saves,
-        sale."createdAt",
-        sale."updatedAt",
-        json_build_object(
-          'id', store.id,
-          'name', store.name,
-          'category', store.category,
-          'logo', store.logo,
-          'address', store.address,
-          'city', store.city
-        ) as store
-      FROM sales sale
-      LEFT JOIN stores store ON sale."storeId" = store.id
-      WHERE sale.status = 'active'
-        AND sale."startDate" <= NOW()
-        AND sale."endDate" >= NOW()
-    `;
-
-    const params: any[] = [];
-    let paramIndex = 1;
+    // Simple query builder approach - search only in sale fields
+    const query = this.salesRepository
+      .createQueryBuilder('sale')
+      .leftJoinAndSelect('sale.store', 'store')
+      .where('sale.status = :status', { status: 'active' });
 
     if (searchTerm) {
-      query += ` AND (
-        LOWER(COALESCE(sale.title, '')) LIKE LOWER($${paramIndex})
-        OR LOWER(COALESCE(sale.description, '')) LIKE LOWER($${paramIndex})
-        OR LOWER(COALESCE(sale.category, '')) LIKE LOWER($${paramIndex})
-        OR LOWER(COALESCE(store.name, '')) LIKE LOWER($${paramIndex})
-      )`;
-      params.push(`%${searchTerm}%`);
-      paramIndex++;
+      // Search in title and description only (no store name to avoid join issues)
+      query.andWhere(
+        '(LOWER(sale.title) LIKE LOWER(:searchTerm) OR LOWER(COALESCE(sale.description, :empty)) LIKE LOWER(:searchTerm) OR LOWER(COALESCE(sale.category, :empty)) LIKE LOWER(:searchTerm))',
+        { searchTerm: `%${searchTerm}%`, empty: '' },
+      );
     }
 
     if (options?.category) {
-      query += ` AND sale.category = $${paramIndex}`;
-      params.push(options.category);
-      paramIndex++;
+      query.andWhere('sale.category = :category', { category: options.category });
     }
 
     if (options?.minDiscount) {
-      query += ` AND sale."discountPercentage" >= $${paramIndex}`;
-      params.push(options.minDiscount);
-      paramIndex++;
+      query.andWhere('sale.discountPercentage >= :minDiscount', {
+        minDiscount: options.minDiscount,
+      });
     }
-
-    query += ` ORDER BY sale."discountPercentage" DESC`;
 
     if (options?.limit) {
-      query += ` LIMIT $${paramIndex}`;
-      params.push(options.limit);
+      query.take(options.limit);
     }
 
-    return this.salesRepository.query(query, params);
+    const sales = await query.orderBy('sale.discountPercentage', 'DESC').getMany();
+
+    // Fix: Convert simple-array strings to actual arrays
+    sales.forEach((sale) => {
+      if (typeof sale.images === 'string') {
+        (sale as any).images = (sale.images as string).split(',');
+      }
+    });
+
+    return sales;
   }
 
   async getStatistics(storeId?: string) {
