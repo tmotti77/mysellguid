@@ -288,44 +288,31 @@ export class SalesService {
       limit?: number;
     },
   ): Promise<Sale[]> {
-    // Simple query builder approach - search only in sale fields
-    const query = this.salesRepository
-      .createQueryBuilder('sale')
-      .leftJoinAndSelect('sale.store', 'store')
-      .where('sale.status = :status', { status: 'active' });
-
-    if (searchTerm) {
-      // Search in title and description only (no store name to avoid join issues)
-      query.andWhere(
-        '(LOWER(sale.title) LIKE LOWER(:searchTerm) OR LOWER(COALESCE(sale.description, :empty)) LIKE LOWER(:searchTerm) OR LOWER(COALESCE(sale.category, :empty)) LIKE LOWER(:searchTerm))',
-        { searchTerm: `%${searchTerm}%`, empty: '' },
-      );
-    }
-
-    if (options?.category) {
-      query.andWhere('sale.category = :category', { category: options.category });
-    }
-
-    if (options?.minDiscount) {
-      query.andWhere('sale.discountPercentage >= :minDiscount', {
-        minDiscount: options.minDiscount,
-      });
-    }
-
-    if (options?.limit) {
-      query.take(options.limit);
-    }
-
-    const sales = await query.orderBy('sale.discountPercentage', 'DESC').getMany();
-
-    // Fix: Convert simple-array strings to actual arrays
-    sales.forEach((sale) => {
-      if (typeof sale.images === 'string') {
-        (sale as any).images = (sale.images as string).split(',');
-      }
+    // Debug: Use findAll as base and add search filtering
+    const allSales = await this.findAll({
+      status: SaleStatus.ACTIVE,
+      limit: options?.limit || 50,
     });
 
-    return sales;
+    if (!searchTerm) {
+      return allSales;
+    }
+
+    // Filter in memory for now to debug the issue
+    const searchLower = searchTerm.toLowerCase();
+    return allSales.filter((sale) => {
+      const title = (sale.title || '').toLowerCase();
+      const description = (sale.description || '').toLowerCase();
+      const category = (sale.category || '').toLowerCase();
+      const storeName = (sale.store?.name || '').toLowerCase();
+
+      return (
+        title.includes(searchLower) ||
+        description.includes(searchLower) ||
+        category.includes(searchLower) ||
+        storeName.includes(searchLower)
+      );
+    });
   }
 
   async getStatistics(storeId?: string) {
