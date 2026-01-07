@@ -4,9 +4,12 @@ import Constants from 'expo-constants';
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:3000/api';
 
+// Log the API URL for debugging
+console.log('API URL:', API_URL);
+
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 10000,
+  timeout: 30000, // Increased timeout for slow connections
   headers: {
     'Content-Type': 'application/json',
   },
@@ -60,11 +63,29 @@ export default api;
 
 // API Services
 export const authService = {
-  register: (data: { email: string; password: string; firstName?: string; lastName?: string }) =>
-    api.post('/auth/register', data),
+  register: async (data: { email: string; password: string; firstName?: string; lastName?: string }) => {
+    try {
+      console.log('Registering user:', data.email);
+      const response = await api.post('/auth/register', data);
+      console.log('Registration successful');
+      return response;
+    } catch (error: any) {
+      console.error('Registration error:', error.message, error.response?.data);
+      throw error;
+    }
+  },
 
-  login: (email: string, password: string) =>
-    api.post('/auth/login', { email, password }),
+  login: async (email: string, password: string) => {
+    try {
+      console.log('Logging in user:', email);
+      const response = await api.post('/auth/login', { email, password });
+      console.log('Login successful');
+      return response;
+    } catch (error: any) {
+      console.error('Login error:', error.message, error.response?.data);
+      throw error;
+    }
+  },
 
   logout: () => api.post('/auth/logout'),
 };
