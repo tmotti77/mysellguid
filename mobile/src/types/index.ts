@@ -34,11 +34,11 @@ export interface Store {
   instagramHandle?: string;
   facebookPage?: string;
   openingHours?: object;
-  latitude: number;
-  longitude: number;
+  latitude?: number | string;
+  longitude?: number | string;
   distance?: number;
-  rating: number;
-  reviewCount: number;
+  rating?: number | string;
+  reviewCount?: number;
   isVerified: boolean;
 }
 
@@ -100,6 +100,7 @@ export type ProfileStackParamList = {
   ProfileHome: undefined;
   EditProfile: undefined;
   Preferences: undefined;
+  CreateSale: undefined;
 };
 
 export type SavedStackParamList = {

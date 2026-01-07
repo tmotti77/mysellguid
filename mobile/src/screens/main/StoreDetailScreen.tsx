@@ -64,8 +64,18 @@ const StoreDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     Linking.openURL(`tel:${phoneNumber}`);
   };
 
-  const handleOpenLocation = (latitude: number, longitude: number) => {
-    const url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+  const handleOpenLocation = (latitude?: number | string, longitude?: number | string) => {
+    if (latitude === undefined || latitude === null || longitude === undefined || longitude === null) {
+      Alert.alert('Location Unavailable', 'This store has not provided location information');
+      return;
+    }
+    const lat = typeof latitude === 'string' ? parseFloat(latitude) : latitude;
+    const lng = typeof longitude === 'string' ? parseFloat(longitude) : longitude;
+    if (isNaN(lat) || isNaN(lng)) {
+      Alert.alert('Invalid Location', 'Location data is invalid');
+      return;
+    }
+    const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
     Linking.openURL(url);
   };
 

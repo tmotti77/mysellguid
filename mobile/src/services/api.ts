@@ -89,6 +89,22 @@ export const salesService = {
     api.get(`/sales/search?q=${query}`, { params }),
 
   trackShare: (saleId: string) => api.post(`/sales/${saleId}/share`),
+
+  create: (data: {
+    title: string;
+    description: string;
+    storeId: string;
+    category: string;
+    discountPercentage?: number;
+    originalPrice?: number;
+    salePrice?: number;
+    currency?: string;
+    images?: string[];
+    latitude?: number | string;
+    longitude?: number | string;
+    startDate?: string;
+    endDate?: string;
+  }) => api.post('/sales', data),
 };
 
 export const storesService = {
