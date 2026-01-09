@@ -15,6 +15,24 @@ const api = axios.create({
   },
 });
 
+// Retry configuration for handling Render cold starts
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 2000; // 2 seconds
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Request interceptor with retry logic for network errors
+api.interceptors.request.use(
+  async (config: any) => {
+    // Initialize retry count if not present
+    if (config._retryCount === undefined) {
+      config._retryCount = 0;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 // Request interceptor to add auth token
 api.interceptors.request.use(
   async (config) => {
@@ -35,24 +53,55 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Handle 401 errors (token expired)
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
+        console.log('Token expired, attempting refresh...');
         const refreshToken = await AsyncStorage.getItem('refreshToken');
+
+        if (!refreshToken) {
+          console.log('No refresh token found, logging out');
+          await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
+          return Promise.reject(error);
+        }
+
         const response = await axios.post(`${API_URL}/auth/refresh`, {}, {
           headers: { Authorization: `Bearer ${refreshToken}` },
+          timeout: 30000, // 30 second timeout for refresh
         });
 
-        const { accessToken } = response.data;
-        await AsyncStorage.setItem('accessToken', accessToken);
+        const { accessToken, refreshToken: newRefreshToken } = response.data;
 
+        // Save BOTH new tokens
+        await AsyncStorage.setItem('accessToken', accessToken);
+        if (newRefreshToken) {
+          await AsyncStorage.setItem('refreshToken', newRefreshToken);
+        }
+
+        console.log('Token refresh successful');
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
-      } catch (refreshError) {
+      } catch (refreshError: any) {
+        console.error('Token refresh failed:', refreshError.message);
         await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
         return Promise.reject(refreshError);
       }
+    }
+
+    // Handle network errors with retry (Render cold start)
+    if (!error.response || error.code === 'ECONNABORTED') {
+      const config = error.config;
+
+      if (config._retryCount < MAX_RETRIES) {
+        config._retryCount += 1;
+        console.log(`Network error - retrying (${config._retryCount}/${MAX_RETRIES})...`);
+        await sleep(RETRY_DELAY);
+        return api(config);
+      }
+
+      console.error('Network error - all retries failed. Server may be down.');
     }
 
     return Promise.reject(error);
