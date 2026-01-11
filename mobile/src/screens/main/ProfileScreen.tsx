@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,14 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
-
+import { useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { ProfileStackParamList } from '../../types';
+import { ProfileStackParamList, Store } from '../../types';
+import { storesService } from '../../services/api';
 
 type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'ProfileHome'>;
 
@@ -21,6 +23,29 @@ interface Props {
 
 const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { user, signOut } = useAuth();
+  const [myStore, setMyStore] = useState<Store | null>(null);
+  const [loadingStore, setLoadingStore] = useState(true);
+
+  const loadMyStore = async () => {
+    try {
+      const response = await storesService.getMyStore();
+      setMyStore(response.data);
+    } catch (error: any) {
+      // 404 means no store, which is fine
+      if (error.response?.status !== 404) {
+        console.error('Error loading store:', error);
+      }
+      setMyStore(null);
+    } finally {
+      setLoadingStore(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadMyStore();
+    }, [])
+  );
 
   const handleLogout = () => {
     Alert.alert(
@@ -61,14 +86,46 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Post Sale Button */}
-        <TouchableOpacity
-          style={styles.postSaleButton}
-          onPress={() => navigation.navigate('CreateSale')}
-        >
-          <Ionicons name="megaphone-outline" size={24} color="#FFFFFF" />
-          <Text style={styles.postSaleText}>Post a Sale</Text>
-        </TouchableOpacity>
+        {/* My Store Section */}
+        <View style={styles.storeSection}>
+          <Text style={styles.sectionTitle}>My Store</Text>
+          {loadingStore ? (
+            <View style={styles.storeLoading}>
+              <ActivityIndicator size="small" color="#4F46E5" />
+            </View>
+          ) : myStore ? (
+            <View style={styles.storeCard}>
+              <View style={styles.storeInfo}>
+                <Ionicons name="storefront" size={24} color="#4F46E5" />
+                <View style={styles.storeDetails}>
+                  <Text style={styles.storeName}>{myStore.name}</Text>
+                  <Text style={styles.storeAddress}>{myStore.address}, {myStore.city}</Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.postSaleButton}
+                onPress={() => navigation.navigate('CreateSale')}
+              >
+                <Ionicons name="megaphone-outline" size={20} color="#FFFFFF" />
+                <Text style={styles.postSaleText}>Post a Sale</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.registerStoreButton}
+              onPress={() => navigation.navigate('CreateStore')}
+            >
+              <Ionicons name="add-circle-outline" size={24} color="#4F46E5" />
+              <View style={styles.registerStoreContent}>
+                <Text style={styles.registerStoreTitle}>Register Your Store</Text>
+                <Text style={styles.registerStoreSubtitle}>
+                  Create a store to start posting sales
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color="#9CA3AF" />
+            </TouchableOpacity>
+          )}
+        </View>
 
         {/* Menu Items */}
         <View style={styles.section}>
@@ -189,21 +246,85 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 4,
   },
+  storeSection: {
+    marginTop: 16,
+    marginHorizontal: 16,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  storeLoading: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+  },
+  storeCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+  },
+  storeInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  storeDetails: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  storeName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  storeAddress: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginTop: 2,
+  },
   postSaleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#4F46E5',
-    padding: 16,
-    marginTop: 16,
-    marginHorizontal: 16,
-    borderRadius: 12,
+    padding: 14,
+    borderRadius: 10,
     gap: 8,
   },
   postSaleText: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  registerStoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
+  },
+  registerStoreContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  registerStoreTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  registerStoreSubtitle: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginTop: 2,
   },
   section: {
     backgroundColor: '#FFFFFF',

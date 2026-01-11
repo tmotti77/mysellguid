@@ -101,6 +101,7 @@ export type ProfileStackParamList = {
   EditProfile: undefined;
   Preferences: undefined;
   CreateSale: undefined;
+  CreateStore: undefined;
 };
 
 export type SavedStackParamList = {

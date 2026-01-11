@@ -185,6 +185,27 @@ export const storesService = {
 
   search: (query?: string, category?: string) =>
     api.get('/stores/search', { params: { q: query, category } }),
+
+  getMyStore: () => api.get('/stores/my-store'),
+
+  getMyStores: () => api.get('/stores/my-stores'),
+
+  create: (data: {
+    name: string;
+    description?: string;
+    category?: string;
+    address: string;
+    city: string;
+    country?: string;
+    phoneNumber?: string;
+    email?: string;
+    website?: string;
+    instagramHandle?: string;
+    latitude?: number;
+    longitude?: number;
+  }) => api.post('/stores', data),
+
+  update: (id: string, data: any) => api.patch(`/stores/${id}`, data),
 };
 
 export const userService = {
