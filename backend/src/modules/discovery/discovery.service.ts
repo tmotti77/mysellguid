@@ -38,6 +38,13 @@ export class DiscoveryService implements OnModuleInit {
   private readonly apifyToken: string;
   private readonly autoPublishThreshold = 0.75; // Auto-publish if confidence > 75%
 
+  // Cost control settings
+  private readonly isEnabled: boolean;
+  private readonly maxAiCallsPerDay: number;
+  private readonly maxItemsPerCycle: number;
+  private aiCallsToday: number = 0;
+  private lastResetDate: string = '';
+
   // Israeli Telegram deal channels (public)
   private readonly telegramChannels: TelegramChannel[] = [
     { id: '-1001234567890', username: 'DealsIL', name: 'Deals Israel' },
@@ -68,6 +75,11 @@ export class DiscoveryService implements OnModuleInit {
     this.telegramBotToken = this.configService.get('TELEGRAM_BOT_TOKEN', '');
     this.apifyToken = this.configService.get('APIFY_TOKEN', '');
 
+    // Cost control - DISABLED BY DEFAULT to avoid unexpected charges
+    this.isEnabled = this.configService.get('DISCOVERY_ENABLED', 'false') === 'true';
+    this.maxAiCallsPerDay = parseInt(this.configService.get('DISCOVERY_MAX_AI_CALLS_PER_DAY', '100'), 10);
+    this.maxItemsPerCycle = parseInt(this.configService.get('DISCOVERY_MAX_ITEMS_PER_CYCLE', '5'), 10);
+
     // Load channel config from env if provided
     const channelConfig = this.configService.get('DISCOVERY_TELEGRAM_CHANNELS', '');
     if (channelConfig) {
@@ -82,28 +94,61 @@ export class DiscoveryService implements OnModuleInit {
 
   async onModuleInit() {
     this.logger.log('Sales Discovery Engine initialized');
+    this.logger.log(`Status: ${this.isEnabled ? '✅ ENABLED' : '❌ DISABLED (set DISCOVERY_ENABLED=true to enable)'}`);
+    this.logger.log(`Max AI calls/day: ${this.maxAiCallsPerDay}`);
+    this.logger.log(`Max items/cycle: ${this.maxItemsPerCycle}`);
     this.logger.log(`Monitoring ${this.telegramChannels.length} Telegram channels`);
     this.logger.log(`Monitoring ${this.rssFeeds.length} RSS feeds`);
     this.logger.log(`Auto-publish threshold: ${this.autoPublishThreshold * 100}%`);
   }
 
   /**
-   * Main discovery job - runs every 5 minutes
+   * Check and reset daily AI call counter
    */
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  private checkDailyLimit(): boolean {
+    const today = new Date().toISOString().split('T')[0];
+    if (this.lastResetDate !== today) {
+      this.aiCallsToday = 0;
+      this.lastResetDate = today;
+    }
+    return this.aiCallsToday < this.maxAiCallsPerDay;
+  }
+
+  private incrementAiCalls(): void {
+    this.aiCallsToday++;
+  }
+
+  /**
+   * Main discovery job - runs every 30 minutes (cost-optimized)
+   * Set DISCOVERY_ENABLED=true to activate
+   */
+  @Cron(CronExpression.EVERY_30_MINUTES)
   async runDiscovery() {
-    this.logger.log('Starting discovery cycle...');
+    // Check if discovery is enabled
+    if (!this.isEnabled) {
+      this.logger.debug('Discovery skipped - not enabled');
+      return;
+    }
+
+    // Check daily AI call limit
+    if (!this.checkDailyLimit()) {
+      this.logger.warn(`Daily AI call limit reached (${this.maxAiCallsPerDay}). Skipping discovery.`);
+      return;
+    }
+
+    this.logger.log(`Starting discovery cycle... (AI calls today: ${this.aiCallsToday}/${this.maxAiCallsPerDay})`);
 
     const results = await Promise.allSettled([
       this.discoverFromTelegram(),
       this.discoverFromRss(),
-      this.discoverFromApify(),
+      // Only run Apify if we have lots of budget left (it's more expensive)
+      this.aiCallsToday < this.maxAiCallsPerDay * 0.5 ? this.discoverFromApify() : Promise.resolve(0),
     ]);
 
     const successCount = results.filter(r => r.status === 'fulfilled').length;
     this.logger.log(`Discovery cycle complete. ${successCount}/${results.length} sources succeeded`);
 
-    // Process the queue
+    // Process the queue (respecting limits)
     await this.processDiscoveryQueue();
   }
 
@@ -248,15 +293,27 @@ export class DiscoveryService implements OnModuleInit {
    * Process the discovery queue - extract, validate, and publish
    */
   async processDiscoveryQueue(): Promise<void> {
-    const batchSize = 10;
+    // Respect the per-cycle limit
+    const batchSize = Math.min(this.maxItemsPerCycle, this.discoveryQueue.length);
     const batch = this.discoveryQueue.splice(0, batchSize);
 
     if (batch.length === 0) return;
 
-    this.logger.log(`Processing ${batch.length} discovered items...`);
+    this.logger.log(`Processing ${batch.length} discovered items (limit: ${this.maxItemsPerCycle}/cycle)...`);
 
     for (const item of batch) {
+      // Check if we've hit the daily limit
+      if (!this.checkDailyLimit()) {
+        this.logger.warn('Daily AI limit reached during processing. Remaining items saved for later.');
+        // Put unprocessed items back in queue
+        this.discoveryQueue.unshift(item);
+        break;
+      }
+
       try {
+        // Increment AI call counter BEFORE making the call
+        this.incrementAiCalls();
+
         // Extract sale info using AI
         const extracted = await this.mlService.extractFromUrl(
           item.sourceUrl || `${item.source}:content:${item.rawContent.substring(0, 500)}`
@@ -283,6 +340,8 @@ export class DiscoveryService implements OnModuleInit {
         this.logger.error(`Error processing item ${item.sourceId}:`, error);
       }
     }
+
+    this.logger.log(`AI calls used today: ${this.aiCallsToday}/${this.maxAiCallsPerDay}`);
   }
 
   /**
@@ -569,14 +628,22 @@ export class DiscoveryService implements OnModuleInit {
    */
   getStats() {
     return {
+      enabled: this.isEnabled,
       queueSize: this.discoveryQueue.length,
       processedCount: this.processedSourceIds.size,
+      costControl: {
+        aiCallsToday: this.aiCallsToday,
+        maxAiCallsPerDay: this.maxAiCallsPerDay,
+        maxItemsPerCycle: this.maxItemsPerCycle,
+        remainingCallsToday: Math.max(0, this.maxAiCallsPerDay - this.aiCallsToday),
+      },
       sources: {
         telegram: this.telegramChannels.length,
         rss: this.rssFeeds.length,
         apify: this.apifyToken ? 'configured' : 'not configured',
       },
       autoPublishThreshold: this.autoPublishThreshold,
+      schedule: 'Every 30 minutes',
     };
   }
 
