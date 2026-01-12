@@ -234,3 +234,18 @@ export const bookmarksService = {
 
   check: (saleId: string) => api.get(`/bookmarks/check/${saleId}`),
 };
+
+// AI/ML Service for sale extraction
+export const mlService = {
+  // Analyze image from URL
+  analyzeImage: (imageUrl: string) =>
+    api.post('/ml/analyze-image', { imageUrl }),
+
+  // Extract sale info from social media URL (Instagram, TikTok, etc.)
+  extractFromUrl: (url: string) =>
+    api.post('/ml/extract-from-url', { url }),
+
+  // Analyze screenshot/image (base64) to extract sale info
+  analyzeScreenshot: (base64Data: string, mimeType: string = 'image/jpeg') =>
+    api.post('/ml/analyze-screenshot', { base64Data, mimeType }),
+};
