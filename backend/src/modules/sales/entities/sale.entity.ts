@@ -31,8 +31,12 @@ export enum SaleSource {
   STORE_DASHBOARD = 'store_dashboard',
   INSTAGRAM = 'instagram',
   FACEBOOK = 'facebook',
+  TIKTOK = 'tiktok',
+  TELEGRAM = 'telegram',
+  RSS = 'rss',
   USER_REPORT = 'user_report',
   API = 'api',
+  AUTO_DISCOVERED = 'auto_discovered',
 }
 
 export enum SaleStatus {
@@ -128,6 +132,12 @@ export class Sale {
 
   @Column({ nullable: true })
   sourceId: string; // Original post ID from social media
+
+  @Column({ nullable: true })
+  sourceType: string; // Additional source type info (e.g., channel name)
+
+  @Column({ default: false })
+  autoDiscovered: boolean; // True if discovered by automated engine
 
   // AI extracted data
   @Column({ type: 'jsonb', nullable: true })
