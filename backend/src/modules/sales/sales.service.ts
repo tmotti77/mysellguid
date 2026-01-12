@@ -26,9 +26,12 @@ export class SalesService {
   ) {}
 
   async create(saleData: Partial<Sale>): Promise<Sale> {
-    // Create PostGIS POINT from latitude and longitude
+    // Create PostGIS POINT from latitude and longitude using GeoJSON format
     if (saleData.latitude && saleData.longitude) {
-      saleData.location = `POINT(${saleData.longitude} ${saleData.latitude})`;
+      (saleData as any).location = {
+        type: 'Point',
+        coordinates: [Number(saleData.longitude), Number(saleData.latitude)],
+      };
     }
 
     const sale = this.salesRepository.create(saleData);
@@ -218,9 +221,12 @@ export class SalesService {
   async update(id: string, updateData: Partial<Sale>): Promise<Sale> {
     const sale = await this.findOne(id);
 
-    // Update location if coordinates changed
+    // Update location if coordinates changed (using GeoJSON format)
     if (updateData.latitude && updateData.longitude) {
-      updateData.location = `POINT(${updateData.longitude} ${updateData.latitude})`;
+      (updateData as any).location = {
+        type: 'Point',
+        coordinates: [Number(updateData.longitude), Number(updateData.latitude)],
+      };
     }
 
     // Delete old images if new ones are provided
