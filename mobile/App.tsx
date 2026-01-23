@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
@@ -9,10 +9,17 @@ import RootNavigator from './src/navigation/RootNavigator';
 import { theme } from './src/utils/theme';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { I18nProvider } from './src/i18n/i18nContext';
+import { warmUpServer } from './src/services/api';
 
 const queryClient = new QueryClient();
 
 export default function App() {
+  // Wake up the Render server immediately on app start
+  // This runs in parallel with auth loading and location permission
+  useEffect(() => {
+    warmUpServer();
+  }, []);
+
   return (
     <ErrorBoundary>
       <I18nProvider>

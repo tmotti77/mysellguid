@@ -9,7 +9,7 @@ console.log('API URL:', API_URL);
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 30000, // Increased timeout for slow connections
+  timeout: 60000, // 60s timeout to handle Render free tier cold starts (up to 50s)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -107,6 +107,16 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Wake up the server (call on app start to reduce cold start delay)
+export const warmUpServer = async (): Promise<boolean> => {
+  try {
+    await axios.get(`${API_URL}/health`, { timeout: 60000 });
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 export default api;
 

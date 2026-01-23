@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   TextInput,
   Platform,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import MapView, { Marker, PROVIDER_GOOGLE, Callout, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
@@ -54,12 +55,14 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
+  const [slowLoading, setSlowLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('list'); // Default to list - map requires Google Maps API key config
   const [radius, setRadius] = useState(5000); // 5km default
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [mapError, setMapError] = useState(false);
+  const slowLoadingTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Group nearby sales to prevent marker overlap - create clusters
   const clusteredSales = useMemo(() => {
@@ -98,13 +101,26 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
   ];
 
   useEffect(() => {
+    // Load cached sales immediately for instant display
+    AsyncStorage.getItem('cachedSales').then(cached => {
+      if (cached) {
+        try {
+          setSales(JSON.parse(cached));
+        } catch {}
+      }
+    });
     requestLocationPermission();
   }, []);
 
   useEffect(() => {
     if (location || searchQuery) {
+      // Show "server waking up" after 5 seconds of loading
+      slowLoadingTimer.current = setTimeout(() => setSlowLoading(true), 5000);
       fetchSales();
     }
+    return () => {
+      if (slowLoadingTimer.current) clearTimeout(slowLoadingTimer.current);
+    };
   }, [location, radius, selectedCategory, searchQuery]);
 
   const requestLocationPermission = async () => {
@@ -143,13 +159,22 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
 
       if (response) {
         setSales(response.data);
+        // Cache sales for instant load next time
+        if (!searchQuery) {
+          AsyncStorage.setItem('cachedSales', JSON.stringify(response.data)).catch(() => {});
+        }
       }
     } catch (error) {
       console.error('Error fetching sales:', error);
       // Silent error for search typing
     } finally {
       setLoading(false);
+      setSlowLoading(false);
       setRefreshing(false);
+      if (slowLoadingTimer.current) {
+        clearTimeout(slowLoadingTimer.current);
+        slowLoadingTimer.current = null;
+      }
     }
   };
 
@@ -200,11 +225,16 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
     </TouchableOpacity>
   );
 
-  if (loading) {
+  if (loading && sales.length === 0) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#4F46E5" />
         <Text style={styles.loadingText}>{t('findingSales')}</Text>
+        {slowLoading && (
+          <Text style={styles.slowLoadingText}>
+            Server is waking up, this may take a moment...
+          </Text>
+        )}
       </View>
     );
   }
@@ -759,6 +789,13 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: '#6B7280',
+  },
+  slowLoadingText: {
+    marginTop: 8,
+    fontSize: 13,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    paddingHorizontal: 40,
   },
   errorContainer: {
     flex: 1,
