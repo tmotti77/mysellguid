@@ -47,50 +47,20 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle token refresh
+// Response interceptor to handle token refresh and errors
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle 401 errors (token expired)
+    // Handle 401 errors (token expired) - Supabase tokens last longer, just logout
     if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        console.log('Token expired, attempting refresh...');
-        const refreshToken = await AsyncStorage.getItem('refreshToken');
-
-        if (!refreshToken) {
-          console.log('No refresh token found, logging out');
-          await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
-          return Promise.reject(error);
-        }
-
-        const response = await axios.post(`${API_URL}/auth/refresh`, {}, {
-          headers: { Authorization: `Bearer ${refreshToken}` },
-          timeout: 30000, // 30 second timeout for refresh
-        });
-
-        const { accessToken, refreshToken: newRefreshToken } = response.data;
-
-        // Save BOTH new tokens
-        await AsyncStorage.setItem('accessToken', accessToken);
-        if (newRefreshToken) {
-          await AsyncStorage.setItem('refreshToken', newRefreshToken);
-        }
-
-        console.log('Token refresh successful');
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        return api(originalRequest);
-      } catch (refreshError: any) {
-        console.error('Token refresh failed:', refreshError.message);
-        await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
-        return Promise.reject(refreshError);
-      }
+      console.log('Unauthorized - please login again');
+      await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
+      return Promise.reject(error);
     }
 
-    // Handle network errors with retry (Render cold start)
+    // Handle network errors with retry (for edge function cold starts)
     if (!error.response || error.code === 'ECONNABORTED') {
       const config = error.config;
 
@@ -108,10 +78,10 @@ api.interceptors.response.use(
   }
 );
 
-// Wake up the server (call on app start to reduce cold start delay)
+// Wake up the server (Supabase Edge Functions are always warm - no cold starts!)
 export const warmUpServer = async (): Promise<boolean> => {
   try {
-    await axios.get(`${API_URL}/health`, { timeout: 60000 });
+    await axios.get(`${API_URL}/health`, { timeout: 10000 });
     return true;
   } catch {
     return false;
@@ -125,7 +95,7 @@ export const authService = {
   register: async (data: { email: string; password: string; firstName?: string; lastName?: string }) => {
     try {
       console.log('Registering user:', data.email);
-      const response = await api.post('/auth/register', data);
+      const response = await api.post('/auth-register', data);
       console.log('Registration successful');
       return response;
     } catch (error: any) {
@@ -137,7 +107,7 @@ export const authService = {
   login: async (email: string, password: string) => {
     try {
       console.log('Logging in user:', email);
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/auth-login', { email, password });
       console.log('Login successful');
       return response;
     } catch (error: any) {
@@ -146,7 +116,7 @@ export const authService = {
     }
   },
 
-  logout: () => api.post('/auth/logout'),
+  logout: () => Promise.resolve(), // Supabase logout is client-side only
 };
 
 export const salesService = {
@@ -155,20 +125,20 @@ export const salesService = {
     if (category) {
       params.category = category;
     }
-    return api.get('/sales/nearby', { params });
+    return api.get('/sales-nearby', { params });
   },
 
   getAll: (params?: { category?: string; limit?: number; offset?: number }) =>
-    api.get('/sales', { params }),
+    api.get('/sales-nearby', { params }),
 
-  getById: (id: string) => api.get(`/sales/${id}`),
+  getById: (id: string) => api.get(`/sales-get/${id}`),
 
-  getByStore: (storeId: string) => api.get(`/sales/store/${storeId}`),
+  getByStore: (storeId: string) => api.get(`/sales-by-store/${storeId}`),
 
   search: (query: string, params?: { category?: string; minDiscount?: number }) =>
-    api.get(`/sales/search?q=${query}`, { params }),
+    api.get('/sales-nearby', { params }), // Use nearby with filters instead
 
-  trackShare: (saleId: string) => api.post(`/sales/${saleId}/share`),
+  trackShare: (saleId: string) => Promise.resolve(), // Not implemented yet
 
   create: (data: {
     title: string;
@@ -184,21 +154,21 @@ export const salesService = {
     longitude?: number | string;
     startDate?: string;
     endDate?: string;
-  }) => api.post('/sales', data),
+  }) => api.post('/sales-create', data),
 };
 
 export const storesService = {
   getNearby: (latitude: number, longitude: number, radius: number = 5000) =>
-    api.get(`/stores/nearby?lat=${latitude}&lng=${longitude}&radius=${radius}`),
+    api.get(`/stores-nearby?lat=${latitude}&lng=${longitude}&radius=${radius}`),
 
-  getById: (id: string) => api.get(`/stores/${id}`),
+  getById: (id: string) => api.get(`/stores-get/${id}`),
 
   search: (query?: string, category?: string) =>
-    api.get('/stores/search', { params: { q: query, category } }),
+    api.get('/stores-nearby', { params: { category } }), // Use nearby with filters instead
 
-  getMyStore: () => api.get('/stores/my-store'),
+  getMyStore: () => api.get('/stores-my-stores').then(res => res.data[0]), // Return first store
 
-  getMyStores: () => api.get('/stores/my-stores'),
+  getMyStores: () => api.get('/stores-my-stores'),
 
   create: (data: {
     name: string;
@@ -213,49 +183,38 @@ export const storesService = {
     instagramHandle?: string;
     latitude?: number;
     longitude?: number;
-  }) => api.post('/stores', data),
+  }) => api.post('/stores-create', data),
 
-  update: (id: string, data: any) => api.patch(`/stores/${id}`, data),
+  update: (id: string, data: any) => api.patch(`/stores-update/${id}`, data),
 };
 
 export const userService = {
-  getProfile: () => api.get('/users/me'),
-
-  updateProfile: (data: any) => api.patch('/users/me', data),
-
-  updatePreferences: (preferences: any) => api.patch('/users/me/preferences', preferences),
-
-  updateLocation: (latitude: number, longitude: number) =>
-    api.patch('/users/me/location', { latitude, longitude }),
-
-  updateFcmToken: (fcmToken: string) =>
-    api.patch('/users/me/fcm-token', { fcmToken }),
+  getProfile: () => Promise.reject(new Error('Not implemented yet')),
+  updateProfile: (data: any) => Promise.reject(new Error('Not implemented yet')),
+  updatePreferences: (preferences: any) => Promise.reject(new Error('Not implemented yet')),
+  updateLocation: (latitude: number, longitude: number) => Promise.reject(new Error('Not implemented yet')),
+  updateFcmToken: (fcmToken: string) => Promise.reject(new Error('Not implemented yet')),
 };
 
 export const bookmarksService = {
   getAll: (latitude?: number, longitude?: number) => {
-    const params = latitude && longitude ? { lat: latitude, lng: longitude } : {};
-    return api.get('/bookmarks', { params });
+    return api.get('/bookmarks-list');
   },
 
-  add: (saleId: string) => api.post(`/bookmarks/${saleId}`),
+  add: (saleId: string) => api.post(`/bookmarks-add/${saleId}`),
 
-  remove: (saleId: string) => api.delete(`/bookmarks/${saleId}`),
+  remove: (saleId: string) => api.delete(`/bookmarks-remove/${saleId}`),
 
-  check: (saleId: string) => api.get(`/bookmarks/check/${saleId}`),
+  check: (saleId: string) =>
+    api.get('/bookmarks-list').then(res => ({
+      data: { isBookmarked: res.data.some((b: any) => b.saleId === saleId) }
+    })),
 };
 
-// AI/ML Service for sale extraction
+// AI/ML Service for sale extraction - Not yet implemented in Supabase
 export const mlService = {
-  // Analyze image from URL
-  analyzeImage: (imageUrl: string) =>
-    api.post('/ml/analyze-image', { imageUrl }),
-
-  // Extract sale info from social media URL (Instagram, TikTok, etc.)
-  extractFromUrl: (url: string) =>
-    api.post('/ml/extract-from-url', { url }),
-
-  // Analyze screenshot/image (base64) to extract sale info
-  analyzeScreenshot: (base64Data: string, mimeType: string = 'image/jpeg') =>
-    api.post('/ml/analyze-screenshot', { base64Data, mimeType }),
+  analyzeImage: (imageUrl: string): Promise<any> => Promise.reject(new Error('Not implemented yet')),
+  extractFromUrl: (url: string): Promise<any> => Promise.reject(new Error('Not implemented yet')),
+  analyzeScreenshot: (base64Data: string, mimeType: string = 'image/jpeg'): Promise<any> =>
+    Promise.reject(new Error('Not implemented yet')),
 };

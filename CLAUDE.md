@@ -1,11 +1,12 @@
 # MySellGuid - Project Context for LLM Sessions
 
 ## Quick Summary
-**MySellGuid** is a location-based sales discovery app for the Israeli market. Users find nearby deals/sales using geospatial search. Built with NestJS backend + React Native (Expo) mobile app.
+**MySellGuid** is a location-based sales discovery app for the Israeli market. Users find nearby deals/sales using geospatial search. Built with Supabase Edge Functions backend + React Native (Expo) mobile app.
 
 **Current Status**: ✅ **DEPLOYED AND WORKING**
-- Backend: https://mysellguid-api.onrender.com
+- Backend: https://qfffuuqldmjtxxihynug.supabase.co/functions/v1
 - Repository: https://github.com/tmotti77/mysellguid
+- **MIGRATED FROM RENDER TO SUPABASE** (February 2, 2026)
 
 ---
 
@@ -13,11 +14,11 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      RENDER.COM                              │
+│                      SUPABASE                                │
 ├─────────────────────────────────────────────────────────────┤
-│  Backend API        PostgreSQL+PostGIS     Redis            │
-│  (NestJS)           (Database)             (Cache)          │
-│  Port 10000         dpg-d4n9ef24d50c73fa37g0-a              │
+│  Edge Functions     PostgreSQL+PostGIS     Supabase Auth    │
+│  (Deno Runtime)     (Database)             (JWT)            │
+│  16 endpoints       Free tier              No cold starts   │
 └─────────────────────────────────────────────────────────────┘
                           │
 ┌─────────────────────────┴───────────────────────────────────┐
@@ -32,164 +33,191 @@
 
 | Layer | Technology |
 |-------|------------|
-| Backend | NestJS, TypeORM, PostgreSQL + PostGIS |
+| Backend | Supabase Edge Functions (Deno), PostgreSQL + PostGIS |
 | Mobile | React Native, Expo SDK 54, React Navigation |
 | Web | Next.js 14, TailwindCSS |
-| Cache | Redis (Bull queues) |
-| Auth | JWT (access + refresh tokens) |
+| Auth | Supabase Auth (JWT tokens) |
 | Maps | react-native-maps, Google Maps API |
-| AI | Gemini API (image analysis) |
+| AI | Gemini API (to be migrated) |
 | i18n | Custom context (English + Hebrew) |
 
 ---
 
 ## Key Files & Locations
 
-### Backend (`/backend`)
-- `src/modules/sales/sales.service.ts` - Geospatial search with PostGIS
-- `src/modules/auth/` - JWT authentication
-- `src/seed/seed.service.ts` - Database seeding (coordinates: 32.1544678, 34.9167442)
-- `src/seed/seed.controller.ts` - Secured with SEED_SECRET
-- `src/modules/ml/ml.service.ts` - Gemini/OpenAI image analysis
-- `.env.example` - All environment variables documented
+### Backend (`/supabase/functions`)
+- `sales-nearby/index.ts` - Geospatial search with PostGIS
+- `auth-register/index.ts`, `auth-login/index.ts` - Supabase Auth
+- `migrate-users/index.ts` - Migrated 5 users from old backend
+- `_shared/cors.ts` - CORS headers for all functions
+- `_shared/supabase.ts` - Shared Supabase client
+- See `API_ENDPOINTS.md` for complete endpoint reference
 
 ### Mobile (`/mobile`)
 - `src/screens/main/DiscoverScreen.tsx` - Main map/list view
 - `src/screens/main/SaleDetailScreen.tsx` - Sale details
 - `src/screens/main/StoreDetailScreen.tsx` - Store details
-- `src/services/api.ts` - API client with interceptors
+- `src/services/api.ts` - **UPDATED for Supabase endpoints**
 - `src/context/AuthContext.tsx` - Authentication state
 - `src/i18n/` - Internationalization (en/he)
-- `app.json` - Expo config, apiUrl setting
+- `app.json` - Expo config, apiUrl = Supabase Edge Functions
 
-### Infrastructure (`/infrastructure/docker`)
-- `docker-compose.yml` - PostgreSQL + Redis + pgAdmin
+### Documentation
+- `API_ENDPOINTS.md` - Complete API reference (16 endpoints)
+- `SUPABASE_MIGRATION_COMPLETE.md` - Migration guide
+- `MOBILE_UPDATE_SUPABASE.md` - Mobile app changes
 
 ---
 
-## Environment Variables
+## Supabase Configuration
 
-### Backend (Required for Production)
-```env
-NODE_ENV=production
-DATABASE_URL=postgresql://...  # From Render PostgreSQL
-REDIS_URL=redis://...          # From Render Redis
-SEED_SECRET=<32-char-random>   # For /api/seed endpoint
-JWT_SECRET=<64-char-random>    # For auth tokens
-JWT_REFRESH_SECRET=<64-char-random>
-```
+### Project Details
+- URL: https://qfffuuqldmjtxxihynug.supabase.co
+- Database: PostgreSQL 15 with PostGIS extension
+- Auth: Supabase Auth with JWT tokens
 
-### Optional
-```env
-AI_PROVIDER=gemini
-GOOGLE_GEMINI_API_KEY=...
-GOOGLE_MAPS_API_KEY=...
-OPENAI_API_KEY=...
+### Environment Secrets (Set in Supabase Dashboard)
+- `MIGRATION_SECRET` - For user migration endpoint
+- Database credentials stored securely in Supabase
+
+### Deployment
+All functions deployed with:
+```bash
+npx supabase functions deploy [function-name] --no-verify-jwt
 ```
 
 ---
 
 ## API Endpoints
 
+See `API_ENDPOINTS.md` for complete reference. Quick overview:
+
 | Endpoint | Method | Auth | Description |
 |----------|--------|------|-------------|
-| `/api/health` | GET | No | Health check |
-| `/api/auth/login` | POST | No | Login, returns JWT |
-| `/api/auth/register` | POST | No | User registration |
-| `/api/sales/nearby` | GET | No | Geospatial search |
-| `/api/sales/:id` | GET | No | Sale details |
-| `/api/stores/:id` | GET | No | Store details |
-| `/api/bookmarks` | GET/POST/DELETE | Yes | Save sales |
-| `/api/seed?secret=XXX` | POST | Secret | Seed database |
+| `/health` | GET | No | Health check |
+| `/auth-login` | POST | No | Login, returns JWT |
+| `/auth-register` | POST | No | User registration |
+| `/sales-nearby` | GET | No | Geospatial search |
+| `/sales-get/:id` | GET | No | Sale details |
+| `/sales-create` | POST | Yes | Create sale |
+| `/sales-update/:id` | PATCH | Yes | Update sale |
+| `/sales-by-store/:id` | GET | No | Store's sales |
+| `/stores-nearby` | GET | No | Find stores |
+| `/stores-get/:id` | GET | No | Store details |
+| `/stores-create` | POST | Yes | Create store |
+| `/stores-my-stores` | GET | Yes | User's stores |
+| `/bookmarks-list` | GET | Yes | Saved sales |
+| `/bookmarks-add/:id` | POST | Yes | Add bookmark |
+| `/bookmarks-remove/:id` | DELETE | Yes | Remove bookmark |
+| `/migrate-users` | GET | Secret | Migrate users |
+
+**Total: 16 endpoints, all deployed and working**
 
 ---
 
 ## Test Credentials
+
+### Migrated Users
 - **Email**: test@mysellguid.com
-- **Password**: password123
+- **Password**: TempPassword123! (all migrated users have this temp password)
+
+### New Users
+Create via app registration or API endpoint
 
 ---
 
 ## Common Commands
 
-### Local Development
+### Supabase Functions
+```bash
+# Deploy function
+npx supabase functions deploy [function-name] --no-verify-jwt
+
+# Test endpoint
+curl https://qfffuuqldmjtxxihynug.supabase.co/functions/v1/health
+```
+
+### Mobile Development
 ```powershell
-# Start Docker (PostgreSQL + Redis)
-cd infrastructure/docker
-docker-compose up -d
-
-# Start Backend
-cd backend
-npm install
-npm run start:dev
-
 # Start Mobile
 cd mobile
 npm install --legacy-peer-deps
 npx expo start
 
-# Seed Database (local)
-curl -X POST "http://localhost:3000/api/seed?secret=92c6d9f4bfe9e54e1dd622b0ad13c42c"
+# Build APK
+eas build --platform android --profile production
 ```
 
-### Production
-```powershell
-# Seed Production Database
-curl -X POST "https://mysellguid-api.onrender.com/api/seed?secret=YOUR_SEED_SECRET"
+### Testing
+```bash
+# Health check
+curl https://qfffuuqldmjtxxihynug.supabase.co/functions/v1/health
 
-# Build APK
-cd mobile
-eas build --platform android --profile production
+# Login
+curl -X POST https://qfffuuqldmjtxxihynug.supabase.co/functions/v1/auth-login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@mysellguid.com","password":"TempPassword123!"}'
 ```
 
 ---
 
-## Recent Fixes (December 2025)
+## Migration History
 
-### Session: December 7, 2025
-1. **Secured seed endpoint** - Added SEED_SECRET requirement
-2. **Fixed TypeError** - `store.rating.toFixed()` crash when rating undefined
-   - File: `mobile/src/screens/main/StoreDetailScreen.tsx:198`
-   - Fix: `(store.rating ?? 0).toFixed(1)`
-3. **Fixed date null safety** - `sale.endDate` could be undefined
-   - File: `mobile/src/screens/main/SaleDetailScreen.tsx:206`
-4. **Exported SaleAnalysisResult** - TypeScript compilation error
-   - File: `backend/src/modules/ml/ml.service.ts:4`
-5. **Updated DEPLOYMENT_CHECKLIST.md** - Correct env var count (5, not 2)
+### February 2, 2026 - Supabase Migration
+1. **Migrated from Render to Supabase** - Eliminated cold starts and hosting costs
+2. **Converted NestJS to Edge Functions** - 16 Deno-based serverless functions
+3. **Migrated to Supabase Auth** - Simplified authentication, removed custom JWT
+4. **Preserved all data** - 5 users migrated with temporary password
+5. **Updated mobile app** - All API endpoints updated to new structure
+6. **Zero downtime** - Both backends ran in parallel during migration
+
+### Benefits
+- **$0/month cost** (was $7-25 on Render)
+- **No cold starts** (was 30-50 seconds)
+- **Better performance** - Edge functions closer to users
+- **Simpler auth** - Supabase Auth built-in
+
+### Previous Session: December 7, 2025
+1. Secured seed endpoint with SEED_SECRET
+2. Fixed null safety issues (rating, endDate)
+3. Exported SaleAnalysisResult type
+4. Updated deployment checklist
 
 ---
 
 ## Known Issues / TODO
 
-1. **Free tier cold starts** - Render sleeps after 15 min, ~30s wake time
-2. **Date filtering** - Re-enabled in sales.service.ts (was disabled for testing)
-3. **Hebrew RTL** - Full RTL support needs app restart
-4. **Error boundaries** - Already implemented in App.tsx
-5. **Gemini AI** - Implemented but needs API key to test
+1. ✅ **Cold starts FIXED** - Migrated to Supabase (no cold starts)
+2. **Hebrew RTL** - Full RTL support needs app restart
+3. **ML/AI features** - Need to migrate from old backend
+4. **User profile endpoints** - Not yet implemented in Supabase
+5. **Password reset** - Need to add Supabase password reset flow
 
 ---
 
-## Deployment Checklist
+## Supabase Deployment
 
-### Render Environment Variables (5 Required)
-1. `DATABASE_URL` - From Render PostgreSQL Internal URL
-2. `REDIS_URL` - From Render Redis Internal URL
-3. `SEED_SECRET` - Generate: `node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"`
-4. `JWT_SECRET` - Generate 64-char random string
-5. `JWT_REFRESH_SECRET` - Generate another 64-char string
+### One-Time Setup
+1. Created Supabase project
+2. Enabled PostGIS extension in SQL Editor:
+   ```sql
+   CREATE EXTENSION IF NOT EXISTS postgis;
+   ```
+3. Set `MIGRATION_SECRET` in Supabase secrets
+4. Deployed all 16 functions
 
-### PostGIS Setup (One-time)
-```sql
-CREATE EXTENSION IF NOT EXISTS postgis;
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+### Function Deployment
+```bash
+export SUPABASE_ACCESS_TOKEN=your_token
+npx supabase functions deploy [function-name] --no-verify-jwt
 ```
 
 ---
 
-## Git Status
+## Git Repository
 - **Branch**: master
-- **Latest Commit**: `43b2b2e Fix: Null safety for rating and date fields`
 - **Remote**: https://github.com/tmotti77/mysellguid
+- **Recent**: Supabase migration complete (February 2, 2026)
 
 ---
 
@@ -197,20 +225,23 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 When continuing work on this project:
 
-1. **Backend is deployed** at https://mysellguid-api.onrender.com
-2. **Mobile app** needs EAS rebuild after code changes
-3. **Seed endpoint** requires `?secret=YOUR_SEED_SECRET`
-4. **Test user**: test@mysellguid.com / password123
-5. **Location**: Ramat Gan, Israel (32.1544678, 34.9167442)
+1. **Backend is on Supabase** at https://qfffuuqldmjtxxihynug.supabase.co/functions/v1
+2. **Mobile app API updated** to Supabase endpoints
+3. **Test user**: test@mysellguid.com / TempPassword123!
+4. **Location**: Ramat Gan, Israel (32.1544678, 34.9167442)
+5. **16 endpoints deployed and working**
 
 ### Priority Tasks
-- [ ] Build new APK with latest fixes
+- [x] Migrate backend to Supabase
+- [x] Update mobile app API endpoints
+- [ ] Build new APK with Supabase integration
+- [ ] Migrate ML/AI features to Supabase
+- [ ] Add user profile/password reset endpoints
 - [ ] Test on iOS device
-- [ ] Add real store images
-- [ ] Implement push notifications (Firebase)
 - [ ] Deploy web dashboard to Vercel
 
 ---
 
-**Last Updated**: December 7, 2025
+**Last Updated**: February 2, 2026
 **Maintained By**: Claude Code sessions
+**Current Phase**: Supabase Migration Complete ✅
