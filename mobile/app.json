@@ -61,7 +61,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "https://mysellguid-api.onrender.com/api",
+      "apiUrl": "https://qfffuuqldmjtxxihynug.supabase.co/functions/v1",
       "eas": {
         "projectId": "92697039-8e9f-4c84-a449-4d68d30b2bb7"
       }
