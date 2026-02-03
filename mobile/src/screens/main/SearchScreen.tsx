@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
+import * as Location from 'expo-location';
 import { salesService } from '../../services/api';
 import { Sale, SearchStackParamList } from '../../types';
 
@@ -47,6 +48,20 @@ const SearchScreen: React.FC<Props> = ({ navigation }) => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  // Get location once on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const pos = await Location.getCurrentPositionAsync({});
+          setLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+        }
+      } catch {}
+    })();
+  }, []);
 
   // Debounced search
   useEffect(() => {
@@ -64,18 +79,37 @@ const SearchScreen: React.FC<Props> = ({ navigation }) => {
     } catch (error) {
       console.error('SearchScreen useEffect error:', error);
     }
-  }, [searchQuery, selectedCategory, selectedDiscount]);
+  }, [searchQuery, selectedCategory, selectedDiscount, location]);
 
   const performSearch = async () => {
     setLoading(true);
     setSearched(true);
     try {
-      const params: any = {};
+      // Use a large radius to get all sales, then filter client-side by query
+      const lat = location?.latitude ?? 32.0853; // Default to Tel Aviv if no location
+      const lng = location?.longitude ?? 34.7818;
+      const params: any = { lat, lng, radius: 50000 }; // 50km
       if (selectedCategory) params.category = selectedCategory;
       if (selectedDiscount > 0) params.minDiscount = selectedDiscount;
 
-      const response = await salesService.search(searchQuery, params);
-      setSales(response.data);
+      const response = await salesService.getNearby(lat, lng, 50000, selectedCategory || undefined);
+      const allSales: Sale[] = response.data;
+
+      // Client-side title/description filter
+      const query = searchQuery.trim().toLowerCase();
+      const filtered = allSales.filter(
+        (s) =>
+          s.title.toLowerCase().includes(query) ||
+          s.description?.toLowerCase().includes(query) ||
+          s.category?.toLowerCase().includes(query)
+      );
+
+      // Apply discount filter client-side too
+      const discountFiltered = selectedDiscount > 0
+        ? filtered.filter((s) => (s.discountPercentage || 0) >= selectedDiscount)
+        : filtered;
+
+      setSales(discountFiltered);
     } catch (error) {
       console.error('Search error:', error);
       setSales([]);
