@@ -192,11 +192,17 @@ curl -X POST https://qfffuuqldmjtxxihynug.supabase.co/functions/v1/auth-login \
 ## Known Issues / TODO
 
 1. ✅ **Cold starts FIXED** - Migrated to Supabase (no cold starts)
-2. ✅ **User profile endpoint** - auth-update-profile (needs deployment)
-3. ✅ **Password reset** - auth-reset-password (needs deployment)
-4. **Hebrew RTL** - Full RTL support needs app restart
-5. **ML/AI features** - Need to migrate from old backend
-6. **Image uploads** - Web uses local base64 preview only (no server upload endpoint)
+2. ✅ **User profile endpoint** - auth-update-profile DEPLOYED
+3. ✅ **Password reset** - auth-reset-password DEPLOYED (uses anon key client)
+4. ✅ **Sales delete** - sales-delete DEPLOYED
+5. ✅ **ML/AI features** - ml-analyze edge function DEPLOYED (Gemini-powered)
+6. ✅ **Discovery engine** - discovery edge function DEPLOYED (RSS + Telegram scraping)
+7. ✅ **Web dashboard Discovery page** - /dashboard/discovery with AI analyzer + auto-discovery
+8. ✅ **Web deployed to Vercel** - https://web-gamma-ecru-34.vercel.app
+9. ✅ **auth-register syncs users** - new users auto-inserted into public.users table (FK compat)
+10. **Gemini API** - Key set but Generative Language API needs enabling on Google Cloud project 349289031772
+11. **Hebrew RTL** - Full RTL support needs app restart
+12. **Image uploads** - Web uses local base64 preview only (no server upload endpoint)
 
 ---
 
@@ -243,12 +249,15 @@ When continuing work on this project:
 - [x] Fix mobile screens (SavedScreen, EditProfile, SearchScreen, distances)
 - [x] Update web dashboard for Supabase (api.ts, all pages)
 - [x] Build APK with bug fixes (EAS preview builds available)
-- [x] Add user profile endpoint (auth-update-profile)
-- [x] Add password reset endpoint (auth-reset-password)
-- [x] Add sales delete endpoint (sales-delete)
-- [ ] Deploy 3 new endpoints to Supabase (manual — needs access token)
-- [ ] Deploy web dashboard to Vercel (`vercel login` then `vercel --cwd web`)
-- [ ] Migrate ML/AI features to Supabase
+- [x] Add user profile endpoint (auth-update-profile) — DEPLOYED
+- [x] Add password reset endpoint (auth-reset-password) — DEPLOYED
+- [x] Add sales delete endpoint (sales-delete) — DEPLOYED
+- [x] Deploy all endpoints to Supabase (22 total)
+- [x] Deploy web dashboard to Vercel — https://web-gamma-ecru-34.vercel.app
+- [x] Migrate ML/AI features — ml-analyze edge function (Gemini)
+- [x] Discovery engine — RSS + Telegram scraping with auto-publish
+- [x] Web Discovery page with AI analyzer
+- [ ] Enable Generative Language API on Google Cloud (project 349289031772)
 - [ ] Test on iOS device
 
 ### Manual Steps Required

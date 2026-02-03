@@ -4,6 +4,7 @@ import { corsHeaders, handleCors } from '../_shared/cors.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -14,9 +15,10 @@ serve(async (req) => {
     const body = await req.json();
 
     if (body.email && !body.token) {
-      // Step 1: Request password reset email
-      const { error } = await supabase.auth.resetPasswordByEmail(body.email, {
-        redirectTo: `${Deno.env.get('SITE_URL') || 'http://localhost:3000'}/reset-password`,
+      // Use anon-key client for resetPasswordByEmail (GoTrue client method)
+      const anonClient = createClient(supabaseUrl, supabaseAnonKey);
+      const { error } = await anonClient.auth.resetPasswordByEmail(body.email, {
+        redirectTo: `${Deno.env.get('SITE_URL') || 'https://mysellguid.vercel.app'}/reset-password`,
       });
 
       if (error) {

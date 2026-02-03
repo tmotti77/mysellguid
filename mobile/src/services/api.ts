@@ -181,10 +181,18 @@ export const bookmarksService = {
     })),
 };
 
-// AI/ML Service for sale extraction - Not yet implemented in Supabase
+// AI/ML Service for sale extraction via ml-analyze edge function
 export const mlService = {
-  analyzeImage: (imageUrl: string): Promise<any> => Promise.reject(new Error('Not implemented yet')),
-  extractFromUrl: (url: string): Promise<any> => Promise.reject(new Error('Not implemented yet')),
+  analyzeImage: (imageUrl: string): Promise<any> =>
+    api.post('/ml-analyze', { action: 'image', imageUrl }),
+  extractFromUrl: (url: string): Promise<any> =>
+    api.post('/ml-analyze', { action: 'url', url }),
   analyzeScreenshot: (base64Data: string, mimeType: string = 'image/jpeg'): Promise<any> =>
-    Promise.reject(new Error('Not implemented yet')),
+    api.post('/ml-analyze', { action: 'screenshot', base64Data, mimeType }),
+};
+
+// Discovery engine service
+export const discoveryService = {
+  getStats: (): Promise<any> => api.get('/discovery?action=stats'),
+  runDiscovery: (): Promise<any> => api.post('/discovery?action=run'),
 };

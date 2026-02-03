@@ -14,7 +14,8 @@ import {
     Menu,
     X,
     Bell,
-    ChevronRight
+    ChevronRight,
+    Compass
 } from 'lucide-react';
 
 export default function DashboardLayout({
@@ -47,6 +48,7 @@ export default function DashboardLayout({
         { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
         { name: 'My Store', href: '/dashboard/store', icon: Store },
         { name: 'Sales', href: '/dashboard/sales', icon: ShoppingBag },
+        { name: 'Discovery', href: '/dashboard/discovery', icon: Compass },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings },
     ];
 

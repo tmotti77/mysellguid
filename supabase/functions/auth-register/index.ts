@@ -45,6 +45,20 @@ serve(async (req) => {
       );
     }
 
+    // Sync user into public.users table (needed for FK constraints on bookmarks/stores)
+    (async () => {
+      try {
+        await supabase.from('users').insert({
+          id: data.user?.id,
+          email: data.user?.email,
+          password: 'supabase_auth_managed',
+          firstName: firstName || '',
+          lastName: lastName || '',
+          role: 'user',
+        });
+      } catch (_) { /* ignore duplicate */ }
+    })();
+
     // Sign in the user to get tokens
     const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
       email,
