@@ -232,7 +232,7 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.loadingText}>{t('findingSales')}</Text>
         {slowLoading && (
           <Text style={styles.slowLoadingText}>
-            Server is waking up, this may take a moment...
+            This is taking a moment, please wait...
           </Text>
         )}
       </View>
