@@ -14,8 +14,6 @@ import { warmUpServer } from './src/services/api';
 const queryClient = new QueryClient();
 
 export default function App() {
-  // Wake up the Render server immediately on app start
-  // This runs in parallel with auth loading and location permission
   useEffect(() => {
     warmUpServer();
   }, []);
