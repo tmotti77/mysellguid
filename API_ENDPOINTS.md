@@ -129,6 +129,18 @@ Content-Type: application/json
 Response: Updated sale object
 ```
 
+### Delete Sale
+```bash
+DELETE /sales-delete/{saleId}
+Authorization: Bearer {accessToken}
+
+Response:
+{
+  "message": "Sale deleted successfully"
+}
+```
+> Verifies ownership via the sale's store. Returns 403 if user doesn't own the store.
+
 ---
 
 ## 🏪 Store Endpoints
@@ -278,6 +290,7 @@ Response:
 | `/sales-by-store/:id` | GET | ❌ | ✅ Live |
 | `/sales-create` | POST | ✅ | ✅ Live |
 | `/sales-update/:id` | PATCH | ✅ | ✅ Live |
+| `/sales-delete/:id` | DELETE | ✅ | ⏳ Deploy pending |
 | `/stores-nearby` | GET | ❌ | ✅ Live |
 | `/stores-get/:id` | GET | ❌ | ✅ Live |
 | `/stores-my-stores` | GET | ✅ | ✅ Live |
