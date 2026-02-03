@@ -97,8 +97,11 @@ export default function NewSalePage() {
 
         setLoading(true);
         try {
+            // Only send remote image URLs to API (skip local base64 previews)
+            const remoteImages = formData.images.filter(url => url.startsWith('http'));
             await salesService.create({
                 ...formData,
+                images: remoteImages,
                 storeId: store.id,
                 latitude: store.latitude,
                 longitude: store.longitude,

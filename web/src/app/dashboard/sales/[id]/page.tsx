@@ -120,8 +120,11 @@ export default function EditSalePage() {
         setSaving(true);
 
         try {
+            // Only send remote image URLs to API (skip local base64 previews)
+            const remoteImages = formData.images.filter(url => url.startsWith('http'));
             await salesService.update(id, {
                 ...formData,
+                images: remoteImages,
                 originalPrice: formData.originalPrice ? Number(formData.originalPrice) : undefined,
                 salePrice: formData.salePrice ? Number(formData.salePrice) : undefined,
                 discountPercentage: formData.discountPercentage ? Number(formData.discountPercentage) : undefined,
