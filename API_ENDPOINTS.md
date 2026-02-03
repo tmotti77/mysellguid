@@ -186,6 +186,21 @@ Content-Type: application/json
 Response: Created store object
 ```
 
+### Update Store
+```bash
+PATCH /stores-update/{storeId}
+Authorization: Bearer {accessToken}
+Content-Type: application/json
+
+{
+  "name": "Updated Store Name",
+  "description": "New description",
+  ... (any fields you want to update)
+}
+
+Response: Updated store object
+```
+
 ---
 
 ## 📌 Bookmark Endpoints
@@ -267,12 +282,13 @@ Response:
 | `/stores-get/:id` | GET | ❌ | ✅ Live |
 | `/stores-my-stores` | GET | ✅ | ✅ Live |
 | `/stores-create` | POST | ✅ | ✅ Live |
+| `/stores-update/:id` | PATCH | ✅ | ✅ Live |
 | `/bookmarks-list` | GET | ✅ | ✅ Live |
 | `/bookmarks-add/:id` | POST | ✅ | ✅ Live |
 | `/bookmarks-remove/:id` | DELETE | ✅ | ✅ Live |
 | `/migrate-users` | GET | 🔑 | ✅ Live |
 
-**Total: 16 endpoints deployed**
+**Total: 17 endpoints deployed**
 
 ---
 
@@ -379,7 +395,6 @@ api.post('/auth-login', { email, password })
 ## 🚧 Optional Future Endpoints
 
 - `sales-delete` - Delete sale
-- `stores-update` - Update store
 - `stores-delete` - Delete store
 - `sales-search` - Text search (can use nearby with filters)
 - ML/AI endpoints (image analysis, URL extraction)
