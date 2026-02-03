@@ -82,6 +82,13 @@ temp/
 # Docker
 docker-compose.override.yml
 
+# Build artifacts
+*.apk
+*.aab
+
+# Uploads
+backend/uploads/
+
 # Misc
 .cache/
 .parcel-cache/
