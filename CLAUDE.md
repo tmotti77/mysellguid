@@ -101,6 +101,7 @@ See `API_ENDPOINTS.md` for complete reference. Quick overview:
 | `/sales-get/:id` | GET | No | Sale details |
 | `/sales-create` | POST | Yes | Create sale |
 | `/sales-update/:id` | PATCH | Yes | Update sale |
+| `/sales-delete/:id` | DELETE | Yes | Delete sale |
 | `/sales-by-store/:id` | GET | No | Store's sales |
 | `/stores-nearby` | GET | No | Find stores |
 | `/stores-get/:id` | GET | No | Store details |
@@ -112,7 +113,7 @@ See `API_ENDPOINTS.md` for complete reference. Quick overview:
 | `/bookmarks-remove/:id` | DELETE | Yes | Remove bookmark |
 | `/migrate-users` | GET | Secret | Migrate users |
 
-**Total: 17 endpoints, all deployed and working**
+**Total: 18 endpoints (sales-delete needs deployment via `npx supabase functions deploy sales-delete --no-verify-jwt`)**
 
 ---
 
@@ -230,19 +231,28 @@ When continuing work on this project:
 2. **Mobile app API updated** to Supabase endpoints
 3. **Test user**: test@mysellguid.com / TempPassword123!
 4. **Location**: Ramat Gan, Israel (32.1544678, 34.9167442)
-5. **16 endpoints deployed and working**
+5. **17 of 18 endpoints deployed** (sales-delete needs manual deploy)
+6. **Web dashboard builds cleanly** — ready for Vercel deploy
 
 ### Priority Tasks
 - [x] Migrate backend to Supabase
 - [x] Update mobile app API endpoints
-- [ ] Build new APK with Supabase integration
+- [x] Fix mobile screens (SavedScreen, EditProfile, SearchScreen, distances)
+- [x] Update web dashboard for Supabase (api.ts, all pages)
+- [x] Build APK with bug fixes (EAS preview builds available)
+- [ ] Deploy sales-delete endpoint (`npx supabase functions deploy sales-delete --no-verify-jwt`)
+- [ ] Deploy web dashboard to Vercel (`vercel login` then `vercel --cwd web`)
 - [ ] Migrate ML/AI features to Supabase
 - [ ] Add user profile/password reset endpoints
 - [ ] Test on iOS device
-- [ ] Deploy web dashboard to Vercel
+
+### Manual Steps Required
+1. **Supabase deploy**: `export SUPABASE_ACCESS_TOKEN=<token>` then `npx supabase functions deploy sales-delete --no-verify-jwt`
+2. **Vercel deploy**: `vercel login` then `vercel --cwd web` (set env `NEXT_PUBLIC_API_URL` to Supabase URL)
+3. **GitHub push**: Add MoNAi777 as collaborator on tmotti77/mysellguid, or re-auth `gh` as tmotti77
 
 ---
 
-**Last Updated**: February 2, 2026
+**Last Updated**: February 3, 2026
 **Maintained By**: Claude Code sessions
-**Current Phase**: Supabase Migration Complete ✅
+**Current Phase**: Web Dashboard + Mobile Bug Fixes Complete ✅
