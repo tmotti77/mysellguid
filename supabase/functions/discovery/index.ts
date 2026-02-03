@@ -326,8 +326,8 @@ serve(async (req) => {
         }
       }
 
-      // Analyze top candidates (limit to 5 per run)
-      const toAnalyze = candidates.slice(0, 5);
+      // Analyze top candidates (limit to 10 per run)
+      const toAnalyze = candidates.slice(0, 10);
       for (const candidate of toAnalyze) {
         try {
           // Try Gemini; fall back to regex if unavailable or API fails
