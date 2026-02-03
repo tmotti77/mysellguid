@@ -92,12 +92,27 @@ serve(async (req) => {
 
       if (fallbackError) throw fallbackError;
 
-      // Convert images string to array
-      const formattedData = (fallbackData || []).map((sale: any) => ({
-        ...sale,
-        images: sale.images ? sale.images.split(',') : [],
-        distance: null,
-      }));
+      // Haversine distance in meters
+      const toRad = (deg: number) => (deg * Math.PI) / 180;
+      const haversine = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+        const R = 6371000; // Earth radius in meters
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      };
+
+      // Convert images, compute distance, filter by radius, sort by distance
+      const formattedData = (fallbackData || [])
+        .map((sale: any) => ({
+          ...sale,
+          images: sale.images ? sale.images.split(',') : [],
+          distance: sale.latitude && sale.longitude
+            ? haversine(latitude, longitude, Number(sale.latitude), Number(sale.longitude))
+            : null,
+        }))
+        .filter((sale: any) => sale.distance === null || sale.distance <= radius)
+        .sort((a: any, b: any) => (a.distance || 0) - (b.distance || 0));
 
       return new Response(JSON.stringify(formattedData), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
