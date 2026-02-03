@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mysellguid-api.onrender.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://qfffuuqldmjtxxihynug.supabase.co/functions/v1';
 
 const api = axios.create({
     baseURL: API_URL,
@@ -21,29 +21,15 @@ api.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Add a response interceptor to handle token refresh (simplified for web)
+// Handle 401 — clear session and redirect to login
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
-        const originalRequest = error.config;
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true;
-            try {
-                const refreshToken = localStorage.getItem('refreshToken');
-                const response = await axios.post(`${API_URL}/auth/refresh`, {}, {
-                    headers: { Authorization: `Bearer ${refreshToken}` }
-                });
-                const { accessToken } = response.data;
-                localStorage.setItem('accessToken', accessToken);
-                originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-                return api(originalRequest);
-            } catch (refreshError) {
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
-                localStorage.removeItem('user');
-                window.location.href = '/login';
-                return Promise.reject(refreshError);
-            }
+        if (error.response?.status === 401) {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
         }
         return Promise.reject(error);
     }
@@ -91,37 +77,25 @@ interface SaleData {
 }
 
 export const authService = {
-    login: (email: string, password: string) => api.post('/auth/login', { email, password }),
-    register: (data: RegisterData) => api.post('/auth/register', data),
-    logout: () => api.post('/auth/logout'),
-    getProfile: () => api.get('/users/me'),
+    login: (email: string, password: string) => api.post('/auth-login', { email, password }),
+    register: (data: RegisterData) => api.post('/auth-register', data),
+    logout: () => Promise.resolve(), // Supabase logout is client-side only
 };
 
 export const storesService = {
-    getMyStore: () => api.get('/stores/my-store'),
-    create: (data: StoreData) => api.post('/stores', data),
-    update: (id: string, data: Partial<StoreData>) => api.patch(`/stores/${id}`, data),
+    getMyStores: () => api.get('/stores-my-stores'),
+    getMyStore: () => api.get('/stores-my-stores').then(res => ({ data: res.data[0] || null })),
+    getById: (id: string) => api.get(`/stores-get/${id}`),
+    create: (data: StoreData) => api.post('/stores-create', data),
+    update: (id: string, data: Partial<StoreData>) => api.patch(`/stores-update/${id}`, data),
 };
 
 export const salesService = {
-    getByStore: (storeId: string, limit?: number) => api.get(`/sales/store/${storeId}`, { params: { limit } }),
-    getById: (id: string) => api.get(`/sales/${id}`),
-    create: (data: SaleData) => api.post('/sales', data),
-    update: (id: string, data: Partial<SaleData>) => api.patch(`/sales/${id}`, data),
-    delete: (id: string) => api.delete(`/sales/${id}`),
-    getStatistics: (storeId?: string) => api.get('/sales/statistics', { params: { storeId } }),
-};
-
-export const uploadService = {
-    uploadImage: (file: File) => {
-        const formData = new FormData();
-        formData.append('image', file);
-        return api.post('/upload/image', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
-    },
+    getByStore: (storeId: string, limit?: number) => api.get(`/sales-by-store/${storeId}`, { params: { limit } }),
+    getById: (id: string) => api.get(`/sales-get/${id}`),
+    create: (data: SaleData) => api.post('/sales-create', data),
+    update: (id: string, data: Partial<SaleData>) => api.patch(`/sales-update/${id}`, data),
+    delete: (id: string) => api.delete(`/sales-delete/${id}`),
 };
 
 export default api;

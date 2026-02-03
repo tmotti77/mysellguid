@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { storesService, uploadService } from '@/services/api';
+import { storesService } from '@/services/api';
 import { Loader2, Save, MapPin, Phone, Upload, X } from 'lucide-react';
 
 interface StoreFormData {
@@ -20,7 +20,6 @@ export default function StoreProfilePage() {
     const [store, setStore] = useState<StoreFormData | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [uploading, setUploading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
 
     useEffect(() => {
@@ -64,20 +63,15 @@ export default function StoreProfilePage() {
         setStore({ ...store, [e.target.name]: e.target.value });
     };
 
-    const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        setUploading(true);
-        try {
-            const response = await uploadService.uploadImage(file);
-            setStore((prev) => prev ? { ...prev, logo: response.data.medium } : null);
-        } catch {
-            // Error uploading logo
-            setMessage({ type: 'error', text: 'Failed to upload logo.' });
-        } finally {
-            setUploading(false);
-        }
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setStore((prev) => prev ? { ...prev, logo: reader.result as string } : null);
+        };
+        reader.readAsDataURL(file);
     };
 
     const removeLogo = () => {
@@ -128,25 +122,21 @@ export default function StoreProfilePage() {
                                         </div>
                                     ) : (
                                         <div className="flex items-center justify-center h-32 w-32 rounded-full border-2 border-gray-300 border-dashed">
-                                            {uploading ? (
-                                                <Loader2 className="h-8 w-8 text-gray-400 animate-spin" />
-                                            ) : (
-                                                <label
-                                                    htmlFor="logo-upload"
-                                                    className="cursor-pointer flex flex-col items-center justify-center h-full w-full rounded-full hover:bg-gray-50"
-                                                >
-                                                    <Upload className="h-8 w-8 text-gray-400" />
-                                                    <span className="mt-1 text-xs text-gray-500">Upload</span>
-                                                    <input
-                                                        id="logo-upload"
-                                                        name="logo-upload"
-                                                        type="file"
-                                                        className="sr-only"
-                                                        accept="image/*"
-                                                        onChange={handleLogoChange}
-                                                    />
-                                                </label>
-                                            )}
+                                            <label
+                                                htmlFor="logo-upload"
+                                                className="cursor-pointer flex flex-col items-center justify-center h-full w-full rounded-full hover:bg-gray-50"
+                                            >
+                                                <Upload className="h-8 w-8 text-gray-400" />
+                                                <span className="mt-1 text-xs text-gray-500">Upload</span>
+                                                <input
+                                                    id="logo-upload"
+                                                    name="logo-upload"
+                                                    type="file"
+                                                    className="sr-only"
+                                                    accept="image/*"
+                                                    onChange={handleLogoChange}
+                                                />
+                                            </label>
                                         </div>
                                     )}
                                 </div>

@@ -47,9 +47,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (storedUser) {
                     setUser(JSON.parse(storedUser));
                 } else {
-                    const response = await authService.getProfile();
-                    setUser(response.data);
-                    localStorage.setItem('user', JSON.stringify(response.data));
+                    // No stored user and no profile endpoint — clear stale token
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
                 }
             } catch (error) {
                 console.error('Auth check failed', error);

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { salesService, storesService, uploadService } from '@/services/api';
+import { salesService, storesService } from '@/services/api';
 import { Loader2, X } from 'lucide-react';
 
 interface StoreData {
@@ -16,8 +16,6 @@ export default function NewSalePage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [store, setStore] = useState<StoreData | null>(null);
-    const [uploadingImage, setUploadingImage] = useState(false);
-    
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -64,22 +62,17 @@ export default function NewSalePage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
-        setUploadingImage(true);
-        try {
-            const uploadPromises = Array.from(files).map(file => uploadService.uploadImage(file));
-            const results = await Promise.all(uploadPromises);
-            const imageUrls = results.map(res => res.data.url);
-            setFormData(prev => ({ ...prev, images: [...prev.images, ...imageUrls] }));
-        } catch (error) {
-            console.error('Error uploading images:', error);
-            alert('Failed to upload images');
-        } finally {
-            setUploadingImage(false);
-        }
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData(prev => ({ ...prev, images: [...prev.images, reader.result as string] }));
+            };
+            reader.readAsDataURL(file);
+        });
     };
 
     const removeImage = (index: number) => {
@@ -313,17 +306,15 @@ export default function NewSalePage() {
                             <div className="mt-2">
                                 <div className="flex items-center gap-4">
                                     <label className="relative cursor-pointer rounded-md bg-white px-4 py-2 text-sm font-semibold text-indigo-600 border border-indigo-600 hover:bg-indigo-50">
-                                        <span>{uploadingImage ? 'Uploading...' : 'Upload Images'}</span>
+                                        <span>Upload Images</span>
                                         <input
                                             type="file"
                                             multiple
                                             accept="image/*"
                                             onChange={handleImageUpload}
-                                            disabled={uploadingImage}
                                             className="sr-only"
                                         />
                                     </label>
-                                    {uploadingImage && <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />}
                                 </div>
                                 {formData.images.length > 0 && (
                                     <div className="mt-4 grid grid-cols-3 gap-4">

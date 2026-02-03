@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { salesService, uploadService } from '@/services/api';
+import { salesService } from '@/services/api';
 import {
     Loader2,
     Save,
@@ -25,7 +25,6 @@ export default function EditSalePage() {
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [uploadingImage, setUploadingImage] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -96,22 +95,17 @@ export default function EditSalePage() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
-        setUploadingImage(true);
-        try {
-            const uploadPromises = Array.from(files).map(file => uploadService.uploadImage(file));
-            const results = await Promise.all(uploadPromises);
-            const imageUrls = results.map(res => res.data.url);
-            setFormData(prev => ({ ...prev, images: [...prev.images, ...imageUrls] }));
-        } catch (error) {
-            console.error('Error uploading images:', error);
-            alert('Failed to upload images');
-        } finally {
-            setUploadingImage(false);
-        }
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData(prev => ({ ...prev, images: [...prev.images, reader.result as string] }));
+            };
+            reader.readAsDataURL(file);
+        });
     };
 
     const removeImage = (index: number) => {
@@ -389,7 +383,6 @@ export default function EditSalePage() {
                             multiple
                             accept="image/*"
                             onChange={handleImageUpload}
-                            disabled={uploadingImage}
                             className="hidden"
                             id="image-upload"
                         />
@@ -397,17 +390,8 @@ export default function EditSalePage() {
                             htmlFor="image-upload"
                             className="btn-secondary inline-flex items-center gap-2 cursor-pointer"
                         >
-                            {uploadingImage ? (
-                                <>
-                                    <Loader2 className="h-5 w-5 animate-spin" />
-                                    Uploading...
-                                </>
-                            ) : (
-                                <>
-                                    <Upload className="h-5 w-5" />
-                                    Add Images
-                                </>
-                            )}
+                            <Upload className="h-5 w-5" />
+                            Add Images
                         </label>
                     </div>
 

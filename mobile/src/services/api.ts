@@ -9,29 +9,11 @@ console.log('API URL:', API_URL);
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 60000, // 60s timeout to handle Render free tier cold starts (up to 50s)
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
-
-// Retry configuration for handling Render cold starts
-const MAX_RETRIES = 2;
-const RETRY_DELAY = 2000; // 2 seconds
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Request interceptor with retry logic for network errors
-api.interceptors.request.use(
-  async (config: any) => {
-    // Initialize retry count if not present
-    if (config._retryCount === undefined) {
-      config._retryCount = 0;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
@@ -58,20 +40,6 @@ api.interceptors.response.use(
       console.log('Unauthorized - please login again');
       await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
       return Promise.reject(error);
-    }
-
-    // Handle network errors with retry (for edge function cold starts)
-    if (!error.response || error.code === 'ECONNABORTED') {
-      const config = error.config;
-
-      if (config._retryCount < MAX_RETRIES) {
-        config._retryCount += 1;
-        console.log(`Network error - retrying (${config._retryCount}/${MAX_RETRIES})...`);
-        await sleep(RETRY_DELAY);
-        return api(config);
-      }
-
-      console.error('Network error - all retries failed. Server may be down.');
     }
 
     return Promise.reject(error);
@@ -155,6 +123,8 @@ export const salesService = {
     startDate?: string;
     endDate?: string;
   }) => api.post('/sales-create', data),
+
+  delete: (id: string) => api.delete(`/sales-delete/${id}`),
 };
 
 export const storesService = {

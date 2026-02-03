@@ -22,18 +22,20 @@ export default function DashboardPage() {
             try {
                 const storeRes = await storesService.getMyStore();
                 if (storeRes?.data) {
-                    const [statsData, salesData] = await Promise.all([
-                        salesService.getStatistics(storeRes.data.id),
-                        salesService.getByStore(storeRes.data.id, 5)
-                    ]);
+                    const salesData = await salesService.getByStore(storeRes.data.id);
+                    const allSales: Sale[] = salesData.data || [];
+
+                    const activeSales = allSales.filter(s => s.status === 'active').length;
+                    const totalViews = allSales.reduce((sum, s) => sum + (s.views || 0), 0);
+                    const totalClicks = allSales.reduce((sum, s) => sum + (s.clicks || 0), 0);
 
                     setStats({
-                        activeSales: statsData.data?.active || 0,
-                        totalViews: statsData.data?.totalViews || 0,
-                        ctr: statsData.data?.clickThroughRate || 0,
+                        activeSales,
+                        totalViews,
+                        ctr: totalViews > 0 ? (totalClicks / totalViews) * 100 : 0,
                         rating: 5.0,
                     });
-                    setRecentSales(salesData.data || []);
+                    setRecentSales(allSales.slice(0, 5));
                 }
             } catch {
                 // User doesn't have a store yet - this is normal for new users
