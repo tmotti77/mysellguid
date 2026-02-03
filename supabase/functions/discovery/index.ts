@@ -12,10 +12,10 @@ function createTimeout(ms: number): AbortSignal {
   return controller.signal;
 }
 
-// Israeli deal RSS feeds
+// Deal RSS feeds (Israeli sites block server-side fetches; using global deal feeds as fallback)
 const RSS_FEEDS = [
-  { url: 'https://www.walla.co.il/rss/deals', name: 'Walla Deals' },
-  { url: 'https://www.ynet.co.il/rss/shopping', name: 'Ynet Shopping' },
+  { url: 'https://deals.slashdot.org/rss', name: 'Slashdot Deals' },
+  { url: 'https://www.dealnews.com/rss/', name: 'DealNews' },
 ];
 
 // Israeli Telegram deal channels (public preview scraping)
@@ -30,6 +30,51 @@ const SALE_KEYWORDS = [
 function looksLikeSale(text: string): boolean {
   const lower = text.toLowerCase();
   return SALE_KEYWORDS.some(kw => lower.includes(kw.toLowerCase()));
+}
+
+// Regex-based extraction fallback — works without Gemini for basic price/discount parsing
+function extractSaleFromText(text: string, title: string): any {
+  const discountMatch = text.match(/(\d+)\s*%\s*(?:off|discount|הנחה)/i);
+  const discountPercentage = discountMatch ? parseInt(discountMatch[1]) : null;
+
+  // Price patterns: require $ or ₪ prefix to avoid matching dates/random numbers
+  const priceMatches = text.match(/[\$₪]\s*[\d][\d,.]+/g) || [];
+  const prices = priceMatches
+    .map(p => parseFloat(p.replace(/[$₪,\s]/g, '')))
+    .filter(p => p > 0.99 && p < 100000);
+
+  let originalPrice: number | null = null;
+  let salePrice: number | null = null;
+  if (prices.length >= 2) {
+    originalPrice = Math.max(...prices);
+    salePrice = Math.min(...prices);
+  } else if (prices.length === 1 && discountPercentage) {
+    salePrice = prices[0];
+    originalPrice = Math.round(salePrice / (1 - discountPercentage / 100));
+  }
+
+  // Category from keywords — order matters: specific before general
+  let category = 'other';
+  const lowerText = text.toLowerCase();
+  if (/shoe|sneaker|boot|footwear/.test(lowerText)) category = 'shoes';
+  else if (/fitness|gym|workout|training|exercise/.test(lowerText)) category = 'sports';
+  else if (/beauty|skin|hair|cosmetic/.test(lowerText)) category = 'beauty';
+  else if (/food|meal|restaurant|pizza|grocery/.test(lowerText)) category = 'food';
+  else if (/laptop|phone|tablet|computer|software|electronic|gaming/.test(lowerText)) category = 'electronics';
+  else if (/cloth|shirt|dress|jacket|fashion|apparel/.test(lowerText)) category = 'clothing';
+  else if (/home|furniture|kitchen|decor/.test(lowerText)) category = 'home_goods';
+
+  const confidence = discountPercentage && (originalPrice || salePrice) ? 0.7 : discountPercentage ? 0.45 : 0;
+
+  return {
+    title: title.slice(0, 120),
+    description: text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300),
+    discountPercentage,
+    originalPrice,
+    salePrice,
+    category,
+    confidence,
+  };
 }
 
 function extractXmlTag(xml: string, tag: string): string {
@@ -56,12 +101,14 @@ function parseRssXml(xml: string): { title: string; link: string; description: s
   return items.slice(0, 20);
 }
 
+const FETCH_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Accept-Language': 'he,en-US,en',
+};
+
 async function fetchRss(feedUrl: string): Promise<{ title: string; link: string; description: string; guid: string }[]> {
   try {
-    const res = await fetch(feedUrl, {
-      headers: { 'User-Agent': 'MySellGuid/1.0', 'Accept-Language': 'he,en' },
-      signal: createTimeout(10000),
-    });
+    const res = await fetch(feedUrl, { headers: FETCH_HEADERS, signal: createTimeout(10000) });
     if (!res.ok) return [];
     return parseRssXml(await res.text());
   } catch {
@@ -89,10 +136,7 @@ function parseTelegramMessages(html: string): { id: string; text: string }[] {
 
 async function fetchTelegram(username: string): Promise<{ id: string; text: string }[]> {
   try {
-    const res = await fetch(`https://t.me/s/${username}`, {
-      headers: { 'User-Agent': 'MySellGuid/1.0' },
-      signal: createTimeout(10000),
-    });
+    const res = await fetch(`https://t.me/s/${username}`, { headers: FETCH_HEADERS, signal: createTimeout(10000) });
     if (!res.ok) return [];
     return parseTelegramMessages(await res.text());
   } catch {
@@ -127,51 +171,88 @@ async function analyzeWithGemini(content: string, source: string): Promise<any> 
   return { confidence: 0 };
 }
 
+const publishErrors: string[] = [];
+
 async function autoPublishSale(supabase: any, sale: any, sourceUrl: string, sourceType: string) {
-  // Find or create "Discovered Sales" store
-  let { data: store } = await supabase.from('stores').select('*').eq('name', 'Discovered Sales').single();
+  try {
+    // Find or create "Discovered Sales" store — use maybeSingle() to avoid throwing on no rows
+    const { data: existingStore } = await supabase.from('stores').select('*').eq('name', 'Discovered Sales').maybeSingle();
+    let store = existingStore;
 
-  if (!store) {
-    const { data: newStore } = await supabase.from('stores').insert({
-      name: 'Discovered Sales',
-      description: 'Sales discovered automatically from deal sites and social media',
-      address: 'Various Locations',
-      city: 'Israel',
-      country: 'Israel',
-      category: 'other',
-      latitude: 32.0853,
-      longitude: 34.7818,
-      location: 'SRID=4326;POINT(34.7818 32.0853)',
-      isVerified: false,
+    if (!store) {
+      const { data: users } = await supabase.from('users').select('id').limit(1);
+      const ownerId = users?.[0]?.id;
+      if (!ownerId) { publishErrors.push('No users found for ownerId'); return null; }
+
+      const { data: created, error: storeErr } = await supabase.from('stores').insert({
+        id: crypto.randomUUID(),
+        name: 'Discovered Sales',
+        description: 'Auto-discovered deals',
+        address: 'Various Locations',
+        city: 'Israel',
+        country: 'Israel',
+        category: 'other',
+        latitude: 32.0853,
+        longitude: 34.7818,
+        location: 'SRID=4326;POINT(34.7818 32.0853)',
+        ownerId,
+        isVerified: false,
+        isActive: true,
+        totalSales: 0,
+        views: 0,
+        rating: 0,
+        reviewCount: 0,
+      }).select().single();
+
+      if (storeErr) { publishErrors.push('Store create error: ' + storeErr.message); return null; }
+      store = created;
+    }
+
+    // Deduplicate — skip if we already published this sourceUrl
+    if (sourceUrl) {
+      const { data: existing } = await supabase.from('sales').select('id').eq('sourceUrl', sourceUrl).maybeSingle();
+      if (existing) return existing;
+    }
+
+    const now = new Date().toISOString();
+    const endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: createdSale, error: saleErr } = await supabase.from('sales').insert({
+      id: crypto.randomUUID(),
+      title: (sale.title || 'Discovered Sale').slice(0, 120),
+      description: (sale.description || '').slice(0, 1000),
+      storeId: store.id,
+      category: sale.category || 'other',
+      discountPercentage: sale.discountPercentage || null,
+      originalPrice: sale.originalPrice || null,
+      salePrice: sale.salePrice || null,
+      currency: 'USD',
+      startDate: now,
+      endDate,
+      status: 'active',
+      images: '',
+      latitude: store.latitude,
+      longitude: store.longitude,
+      location: `SRID=4326;POINT(${store.longitude} ${store.latitude})`,
+      source: 'auto_discovered',
+      sourceUrl: sourceUrl || '',
+      sourceType,
+      autoDiscovered: true,
+      aiMetadata: { confidence: sale.confidence, processingDate: now },
+      views: 0,
+      clicks: 0,
+      shares: 0,
+      saves: 0,
+      createdAt: now,
+      updatedAt: now,
     }).select().single();
-    store = newStore;
+
+    if (saleErr) { publishErrors.push('Sale insert error: ' + saleErr.message); return null; }
+    return createdSale;
+  } catch (e) {
+    publishErrors.push('autoPublish exception: ' + e.message);
+    return null;
   }
-
-  if (!store) return null;
-
-  const { data: created } = await supabase.from('sales').insert({
-    title: sale.title || 'Discovered Sale',
-    description: sale.description || '',
-    storeId: store.id,
-    category: sale.category || 'other',
-    discountPercentage: sale.discountPercentage,
-    originalPrice: sale.originalPrice,
-    salePrice: sale.salePrice,
-    currency: 'ILS',
-    latitude: store.latitude,
-    longitude: store.longitude,
-    location: `SRID=4326;POINT(${store.longitude} ${store.latitude})`,
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'active',
-    source: 'auto_discovered',
-    sourceUrl,
-    sourceType,
-    autoDiscovered: true,
-    aiMetadata: { confidence: sale.confidence, processingDate: new Date().toISOString() },
-  }).select().single();
-
-  return created;
 }
 
 serve(async (req) => {
@@ -198,6 +279,7 @@ serve(async (req) => {
 
     // POST /discovery?action=run — trigger a discovery cycle
     if (action === 'run' && req.method === 'POST') {
+      publishErrors.length = 0;
       const supabase = createClient(supabaseUrl, supabaseKey);
 
       const results = {
@@ -243,25 +325,41 @@ serve(async (req) => {
         }
       }
 
-      // Analyze top candidates with Gemini (limit to 5 per run to control costs)
+      // Analyze top candidates (limit to 5 per run)
       const toAnalyze = candidates.slice(0, 5);
       for (const candidate of toAnalyze) {
-        if (!GEMINI_API_KEY) break;
         try {
-          const extracted = await analyzeWithGemini(candidate.text, candidate.source);
+          // Try Gemini; fall back to regex if unavailable or API fails
+          let extracted = { confidence: 0 };
+          if (GEMINI_API_KEY) {
+            extracted = await analyzeWithGemini(candidate.text, candidate.source);
+          }
+          if (extracted.confidence === 0) {
+            extracted = extractSaleFromText(candidate.text, candidate.text.split('\n')[0] || 'Discovered Sale');
+          }
           results.analyzed++;
 
           if (extracted.confidence >= 0.75) {
-            // Auto-publish high-confidence sales
             const published = await autoPublishSale(supabase, extracted, candidate.sourceUrl || '', candidate.source);
             if (published) results.published++;
           } else if (extracted.confidence >= 0.4) {
+            // Publish if we extracted price data (regex fallback or low-confidence Gemini)
+            if (extracted.discountPercentage && (extracted.originalPrice || extracted.salePrice)) {
+              const published = await autoPublishSale(supabase, extracted, candidate.sourceUrl || '', candidate.source);
+              if (published) { results.published++; continue; }
+            }
             results.pending++;
           }
         } catch (e) {
           results.errors.push(`Analysis error: ${e.message}`);
         }
       }
+
+      if (!GEMINI_API_KEY) {
+        results.errors.push('Gemini not available — using regex extraction. Enable Generative Language API on GCP project to unlock AI analysis.');
+      }
+
+      if (publishErrors.length) results.errors.push(...publishErrors);
 
       return new Response(JSON.stringify({ ok: true, results }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
