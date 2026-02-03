@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
-import { userService } from '../../services/api';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ProfileStackParamList } from '../../types';
 
@@ -40,13 +39,7 @@ const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
 
         setLoading(true);
         try {
-            const response = await userService.updateProfile({
-                firstName,
-                lastName,
-            });
-
-            // Update local user state
-            // Update local user state
+            // Update local user state (profile endpoint not yet available)
             if (user) {
                 const updatedUser = { ...user, firstName, lastName };
                 setUser(updatedUser);

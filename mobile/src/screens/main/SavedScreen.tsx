@@ -52,7 +52,11 @@ const SavedScreen: React.FC<Props> = ({ navigation }) => {
       // Fetch bookmarked sales from backend
       const response = await bookmarksService.getAll(latitude, longitude);
 
-      setSavedSales(response.data.sales || []);
+      // Response is an array of bookmark objects, each with a nested `sale`
+      const sales = (response.data || [])
+        .filter((b: any) => b.sale)
+        .map((b: any) => b.sale);
+      setSavedSales(sales);
     } catch (error) {
       console.error('Error loading saved sales:', error);
       Alert.alert('Error', 'Failed to load saved sales');
