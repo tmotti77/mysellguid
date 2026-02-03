@@ -16,6 +16,7 @@ interface DiscoveryResult {
     telegramItems: number;
     analyzed: number;
     published: number;
+    skipped: number;
     pending: number;
     errors: string[];
 }
@@ -56,7 +57,7 @@ export default function DiscoveryPage() {
             const res = await api.post('/discovery?action=run');
             setLastRun(res.data.results);
         } catch (err: any) {
-            setLastRun({ rssItems: 0, telegramItems: 0, analyzed: 0, published: 0, pending: 0, errors: [err?.response?.data?.error || 'Failed'] });
+            setLastRun({ rssItems: 0, telegramItems: 0, analyzed: 0, published: 0, skipped: 0, pending: 0, errors: [err?.response?.data?.error || 'Failed'] });
         } finally {
             setRunLoading(false);
         }
@@ -168,7 +169,7 @@ export default function DiscoveryPage() {
 
                     {lastRun && (
                         <div className="rounded-lg p-4 space-y-3" style={{ background: 'var(--color-bg-tertiary)' }}>
-                            <div className="grid grid-cols-3 gap-3 text-center">
+                            <div className="grid grid-cols-4 gap-3 text-center">
                                 <div>
                                     <p className="text-2xl font-bold text-indigo-400">{lastRun.rssItems + lastRun.telegramItems}</p>
                                     <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Candidates</p>
@@ -178,8 +179,12 @@ export default function DiscoveryPage() {
                                     <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Published</p>
                                 </div>
                                 <div>
+                                    <p className="text-2xl font-bold text-slate-400">{lastRun.skipped}</p>
+                                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Already saved</p>
+                                </div>
+                                <div>
                                     <p className="text-2xl font-bold text-amber-400">{lastRun.pending}</p>
-                                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Pending Review</p>
+                                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Pending</p>
                                 </div>
                             </div>
                             {lastRun.errors.length > 0 && (
