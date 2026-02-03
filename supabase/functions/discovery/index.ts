@@ -211,7 +211,7 @@ async function autoPublishSale(supabase: any, sale: any, sourceUrl: string, sour
     // Deduplicate — skip if we already published this sourceUrl
     if (sourceUrl) {
       const { data: existing } = await supabase.from('sales').select('id').eq('sourceUrl', sourceUrl).maybeSingle();
-      if (existing) return existing;
+      if (existing) return 'deduped';
     }
 
     const now = new Date().toISOString();
@@ -287,6 +287,7 @@ serve(async (req) => {
         telegramItems: 0,
         analyzed: 0,
         published: 0,
+        skipped: 0,
         pending: 0,
         errors: [] as string[],
       };
@@ -340,13 +341,14 @@ serve(async (req) => {
           results.analyzed++;
 
           if (extracted.confidence >= 0.75) {
-            const published = await autoPublishSale(supabase, extracted, candidate.sourceUrl || '', candidate.source);
-            if (published) results.published++;
+            const result = await autoPublishSale(supabase, extracted, candidate.sourceUrl || '', candidate.source);
+            if (result === 'deduped') results.skipped++;
+            else if (result) results.published++;
           } else if (extracted.confidence >= 0.4) {
-            // Publish if we extracted price data (regex fallback or low-confidence Gemini)
             if (extracted.discountPercentage && (extracted.originalPrice || extracted.salePrice)) {
-              const published = await autoPublishSale(supabase, extracted, candidate.sourceUrl || '', candidate.source);
-              if (published) { results.published++; continue; }
+              const result = await autoPublishSale(supabase, extracted, candidate.sourceUrl || '', candidate.source);
+              if (result === 'deduped') { results.skipped++; continue; }
+              if (result) { results.published++; continue; }
             }
             results.pending++;
           }
