@@ -111,9 +111,11 @@ See `API_ENDPOINTS.md` for complete reference. Quick overview:
 | `/bookmarks-list` | GET | Yes | Saved sales |
 | `/bookmarks-add/:id` | POST | Yes | Add bookmark |
 | `/bookmarks-remove/:id` | DELETE | Yes | Remove bookmark |
+| `/auth-update-profile` | GET/PATCH | Yes | Get/update profile |
+| `/auth-reset-password` | POST | No* | Request/execute password reset |
 | `/migrate-users` | GET | Secret | Migrate users |
 
-**Total: 18 endpoints (sales-delete needs deployment via `npx supabase functions deploy sales-delete --no-verify-jwt`)**
+**Total: 20 endpoints. 3 need deployment: sales-delete, auth-update-profile, auth-reset-password**
 
 ---
 
@@ -190,10 +192,11 @@ curl -X POST https://qfffuuqldmjtxxihynug.supabase.co/functions/v1/auth-login \
 ## Known Issues / TODO
 
 1. ✅ **Cold starts FIXED** - Migrated to Supabase (no cold starts)
-2. **Hebrew RTL** - Full RTL support needs app restart
-3. **ML/AI features** - Need to migrate from old backend
-4. **User profile endpoints** - Not yet implemented in Supabase
-5. **Password reset** - Need to add Supabase password reset flow
+2. ✅ **User profile endpoint** - auth-update-profile (needs deployment)
+3. ✅ **Password reset** - auth-reset-password (needs deployment)
+4. **Hebrew RTL** - Full RTL support needs app restart
+5. **ML/AI features** - Need to migrate from old backend
+6. **Image uploads** - Web uses local base64 preview only (no server upload endpoint)
 
 ---
 
@@ -240,14 +243,22 @@ When continuing work on this project:
 - [x] Fix mobile screens (SavedScreen, EditProfile, SearchScreen, distances)
 - [x] Update web dashboard for Supabase (api.ts, all pages)
 - [x] Build APK with bug fixes (EAS preview builds available)
-- [ ] Deploy sales-delete endpoint (`npx supabase functions deploy sales-delete --no-verify-jwt`)
+- [x] Add user profile endpoint (auth-update-profile)
+- [x] Add password reset endpoint (auth-reset-password)
+- [x] Add sales delete endpoint (sales-delete)
+- [ ] Deploy 3 new endpoints to Supabase (manual — needs access token)
 - [ ] Deploy web dashboard to Vercel (`vercel login` then `vercel --cwd web`)
 - [ ] Migrate ML/AI features to Supabase
-- [ ] Add user profile/password reset endpoints
 - [ ] Test on iOS device
 
 ### Manual Steps Required
-1. **Supabase deploy**: `export SUPABASE_ACCESS_TOKEN=<token>` then `npx supabase functions deploy sales-delete --no-verify-jwt`
+1. **Supabase deploy** (run for each):
+   ```bash
+   export SUPABASE_ACCESS_TOKEN=<token>
+   npx supabase functions deploy sales-delete --no-verify-jwt
+   npx supabase functions deploy auth-update-profile --no-verify-jwt
+   npx supabase functions deploy auth-reset-password --no-verify-jwt
+   ```
 2. **Vercel deploy**: `vercel login` then `vercel --cwd web` (set env `NEXT_PUBLIC_API_URL` to Supabase URL)
 3. **GitHub push**: Add MoNAi777 as collaborator on tmotti77/mysellguid, or re-auth `gh` as tmotti77
 
