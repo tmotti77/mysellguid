@@ -105,13 +105,14 @@ See `API_ENDPOINTS.md` for complete reference. Quick overview:
 | `/stores-nearby` | GET | No | Find stores |
 | `/stores-get/:id` | GET | No | Store details |
 | `/stores-create` | POST | Yes | Create store |
+| `/stores-update/:id` | PATCH | Yes | Update store |
 | `/stores-my-stores` | GET | Yes | User's stores |
 | `/bookmarks-list` | GET | Yes | Saved sales |
 | `/bookmarks-add/:id` | POST | Yes | Add bookmark |
 | `/bookmarks-remove/:id` | DELETE | Yes | Remove bookmark |
 | `/migrate-users` | GET | Secret | Migrate users |
 
-**Total: 16 endpoints, all deployed and working**
+**Total: 17 endpoints, all deployed and working**
 
 ---
 
