@@ -51,11 +51,8 @@ serve(async (req) => {
       );
     }
 
-    // Create GeoJSON location
-    const location = {
-      type: 'Point',
-      coordinates: [Number(longitude), Number(latitude)]
-    };
+    // PostGIS location as EWKT string (geometry column with SRID 4326)
+    const location = `SRID=4326;POINT(${Number(longitude)} ${Number(latitude)})`;
 
     // Create store
     const storeData: any = {

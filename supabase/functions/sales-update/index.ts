@@ -86,10 +86,7 @@ serve(async (req) => {
     if (body.latitude && body.longitude) {
       updateData.latitude = body.latitude;
       updateData.longitude = body.longitude;
-      updateData.location = {
-        type: 'Point',
-        coordinates: [Number(body.longitude), Number(body.latitude)]
-      };
+      updateData.location = `SRID=4326;POINT(${Number(body.longitude)} ${Number(body.latitude)})`;
     }
 
     // Update the sale

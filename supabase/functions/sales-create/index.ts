@@ -68,41 +68,58 @@ serve(async (req) => {
     const saleLat = latitude || storeData?.latitude;
     const saleLng = longitude || storeData?.longitude;
 
-    // Create GeoJSON location
-    const location = saleLat && saleLng ? {
-      type: 'Point',
-      coordinates: [Number(saleLng), Number(saleLat)]
-    } : null;
+    // Use raw INSERT with ST_SetSRID to set the PostGIS location correctly
+    const saleId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const saleEndDate = endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const imagesStr = images ? (Array.isArray(images) ? images.join(',') : images) : '';
 
-    // Create sale
-    const saleData: any = {
-      title,
-      description,
-      storeId,
-      category: category || 'other',
-      discountPercentage: discountPercentage || null,
-      originalPrice: originalPrice || null,
-      salePrice: salePrice || null,
-      currency: currency || 'ILS',
-      startDate: startDate || new Date().toISOString(),
-      endDate: endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      status: 'active',
-      images: images ? images.join(',') : '',
-      latitude: saleLat,
-      longitude: saleLng,
-      location,
-      source: 'store_dashboard',
-      views: 0,
-      clicks: 0,
-      shares: 0,
-      saves: 0,
-    };
+    const insertQuery = `
+      INSERT INTO sales (id, title, description, "storeId", category, "discountPercentage", "originalPrice", "salePrice", currency, "startDate", "endDate", status, images, latitude, longitude, location, source, views, clicks, shares, saves, "createdAt", "updatedAt")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13, $14, ST_SetSRID(ST_Point($14, $13), 4326), 'store_dashboard', 0, 0, 0, 0, $15, $15)
+      RETURNING *
+    `;
 
-    const { data: newSale, error: createError } = await supabase
-      .from('sales')
-      .insert(saleData)
-      .select()
-      .single();
+    const params = [
+      saleId, title, description, storeId, category || 'other',
+      discountPercentage || null, originalPrice || null, salePrice || null,
+      currency || 'ILS', startDate || now, saleEndDate,
+      imagesStr, Number(saleLat), Number(saleLng), now
+    ];
+
+    // Try raw SQL first, fallback to insert without location
+    let newSale: any = null;
+    let createError: any = null;
+
+    try {
+      const { data, error } = await supabase.rpc('exec_sql', { query: insertQuery, params });
+      if (error) throw error;
+      newSale = data?.[0];
+    } catch {
+      // Fallback: insert with EWKT location string
+      const saleData: any = {
+        id: saleId,
+        title, description, storeId,
+        category: category || 'other',
+        discountPercentage: discountPercentage || null,
+        originalPrice: originalPrice || null,
+        salePrice: salePrice || null,
+        currency: currency || 'ILS',
+        startDate: startDate || now,
+        endDate: saleEndDate,
+        status: 'active',
+        images: imagesStr,
+        latitude: saleLat, longitude: saleLng,
+        location: `SRID=4326;POINT(${Number(saleLng)} ${Number(saleLat)})`,
+        source: 'store_dashboard',
+        views: 0, clicks: 0, shares: 0, saves: 0,
+        createdAt: now, updatedAt: now,
+      };
+
+      const result = await supabase.from('sales').insert(saleData).select().single();
+      newSale = result.data;
+      createError = result.error;
+    }
 
     if (createError) {
       console.error('Create error:', createError);
