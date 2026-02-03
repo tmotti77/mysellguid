@@ -80,6 +80,10 @@ export const authService = {
     login: (email: string, password: string) => api.post('/auth-login', { email, password }),
     register: (data: RegisterData) => api.post('/auth-register', data),
     logout: () => Promise.resolve(), // Supabase logout is client-side only
+    getProfile: () => api.get('/auth-update-profile'),
+    updateProfile: (data: { firstName?: string; lastName?: string; avatar?: string }) => api.patch('/auth-update-profile', data),
+    requestPasswordReset: (email: string) => api.post('/auth-reset-password', { email }),
+    updatePassword: (password: string) => api.post('/auth-reset-password', { token: true, password }),
 };
 
 export const storesService = {

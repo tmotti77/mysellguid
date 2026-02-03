@@ -159,11 +159,11 @@ export const storesService = {
 };
 
 export const userService = {
-  getProfile: () => Promise.reject(new Error('Not implemented yet')),
-  updateProfile: (data: any) => Promise.reject(new Error('Not implemented yet')),
-  updatePreferences: (preferences: any) => Promise.reject(new Error('Not implemented yet')),
-  updateLocation: (latitude: number, longitude: number) => Promise.reject(new Error('Not implemented yet')),
-  updateFcmToken: (fcmToken: string) => Promise.reject(new Error('Not implemented yet')),
+  getProfile: () => api.get('/auth-update-profile'),
+  updateProfile: (data: any) => api.patch('/auth-update-profile', data),
+  updatePreferences: (_preferences: any) => Promise.resolve(), // Stored locally
+  updateLocation: (_latitude: number, _longitude: number) => Promise.resolve(), // Stored locally
+  updateFcmToken: (_fcmToken: string) => Promise.resolve(), // Not yet wired to push service
 };
 
 export const bookmarksService = {
