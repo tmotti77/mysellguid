@@ -462,6 +462,16 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
 
 
 
+      {/* Report a Sale FAB */}
+      <TouchableOpacity
+        style={[styles.reportFab, { bottom: 60 + (Platform.OS === 'android' ? Math.max(insets.bottom, 10) : 0) }]}
+        onPress={() => navigation.navigate('ReportSale')}
+        aria-label="Report a Sale"
+      >
+        <Ionicons name="add-circle" size={22} color="#FFFFFF" />
+        <Text style={styles.reportFabText}>Report Sale</Text>
+      </TouchableOpacity>
+
       {/* Sale Count */}
       <View style={[styles.countBadge, { bottom: 20 + (Platform.OS === 'android' ? Math.max(insets.bottom, 10) : 0) }]}>
         <Text style={styles.countText}>{sales.length} {t('nearbyDeals')}</Text>
@@ -836,6 +846,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     marginTop: 8,
+  },
+  reportFab: {
+    position: 'absolute',
+    alignSelf: 'center',
+    backgroundColor: '#4F46E5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 28,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
+    gap: 8,
+  },
+  reportFabText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
 

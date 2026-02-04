@@ -88,6 +88,7 @@ export type DiscoverStackParamList = {
   DiscoverHome: undefined;
   SaleDetail: { saleId: string };
   StoreDetail: { storeId: string };
+  ReportSale: undefined;
 };
 
 export type SearchStackParamList = {

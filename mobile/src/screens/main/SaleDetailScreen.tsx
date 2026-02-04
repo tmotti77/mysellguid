@@ -29,6 +29,21 @@ interface Props {
   route: SaleDetailScreenRouteProp;
 }
 
+const getCategoryColor = (category?: string): string => {
+  const colors: Record<string, string> = {
+    clothing: '#EC4899',
+    fashion: '#EC4899',
+    electronics: '#3B82F6',
+    home_goods: '#F59E0B',
+    home: '#F59E0B',
+    beauty: '#EF4444',
+    sports: '#10B981',
+    food: '#F97316',
+    shoes: '#6366F1',
+  };
+  return colors[category || ''] || '#4F46E5';
+};
+
 const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const { saleId } = route.params;
   const [sale, setSale] = useState<Sale | null>(null);
@@ -161,14 +176,14 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     <ScrollView style={styles.container}>
       {/* Images */}
       <View style={styles.imageContainer}>
-        <Image
-          source={{
-            uri: sale.images && sale.images.length > 0
-              ? sale.images[0]
-              : 'https://via.placeholder.com/400x300?text=No+Image'
-          }}
-          style={styles.image}
-        />
+        {sale.images && sale.images.length > 0 ? (
+          <Image source={{ uri: sale.images[0] }} style={styles.image} />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder, { backgroundColor: getCategoryColor(sale.category) }]}>
+            <Ionicons name="pricetag" size={64} color="rgba(255,255,255,0.6)" />
+            <Text style={styles.imagePlaceholderText}>{sale.category || 'Sale'}</Text>
+          </View>
+        )}
       </View>
 
       {/* Content */}
@@ -286,6 +301,17 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+  },
+  imagePlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imagePlaceholderText: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 10,
+    textTransform: 'capitalize',
   },
   content: {
     padding: 16,

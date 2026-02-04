@@ -103,8 +103,12 @@ export const salesService = {
 
   getByStore: (storeId: string) => api.get(`/sales-by-store/${storeId}`),
 
-  search: (query: string, params?: { category?: string; minDiscount?: number }) =>
-    api.get('/sales-nearby', { params }), // Use nearby with filters instead
+  search: (query: string, params?: { category?: string; minDiscount?: number }) => {
+    const searchParams: any = { query };
+    if (params?.category) searchParams.category = params.category;
+    if (params?.minDiscount) searchParams.minDiscount = params.minDiscount;
+    return api.get('/sales-search', { params: searchParams });
+  },
 
   trackShare: (saleId: string) => Promise.resolve(), // Not implemented yet
 

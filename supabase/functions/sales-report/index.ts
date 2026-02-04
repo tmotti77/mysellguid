@@ -18,7 +18,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { title, description, discountPercentage, originalPrice, salePrice, category, storeName, sourceUrl } = body;
+    const { title, description, discountPercentage, originalPrice, salePrice, category, storeName, sourceUrl, latitude, longitude } = body;
 
     if (!title || !discountPercentage) {
       return new Response(
@@ -87,6 +87,10 @@ serve(async (req) => {
     const now = new Date().toISOString();
     const endDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
 
+    // Use caller-provided location if valid, otherwise fall back to matched store
+    const lat = latitude != null && !isNaN(parseFloat(latitude)) ? parseFloat(latitude) : Number(targetStore.latitude);
+    const lng = longitude != null && !isNaN(parseFloat(longitude)) ? parseFloat(longitude) : Number(targetStore.longitude);
+
     const { data: sale, error: saleErr } = await supabase.from('sales').insert({
       id: crypto.randomUUID(),
       title: title.slice(0, 120),
@@ -101,9 +105,9 @@ serve(async (req) => {
       endDate,
       status: 'active',
       images: '',
-      latitude: targetStore.latitude,
-      longitude: targetStore.longitude,
-      location: `SRID=4326;POINT(${targetStore.longitude} ${targetStore.latitude})`,
+      latitude: lat,
+      longitude: lng,
+      location: `SRID=4326;POINT(${lng} ${lat})`,
       source: 'user_report',
       sourceUrl: sourceUrl || '',
       sourceType: 'community',

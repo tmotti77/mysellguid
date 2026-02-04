@@ -4,6 +4,7 @@ import { DiscoverStackParamList } from '../types';
 import DiscoverScreen from '../screens/main/DiscoverScreen';
 import SaleDetailScreen from '../screens/main/SaleDetailScreen';
 import StoreDetailScreen from '../screens/main/StoreDetailScreen';
+import ReportSaleScreen from '../screens/main/ReportSaleScreen';
 
 const Stack = createStackNavigator<DiscoverStackParamList>();
 
@@ -28,6 +29,14 @@ const DiscoverNavigator = () => {
         component={StoreDetailScreen}
         options={{
           title: 'Store Details',
+          headerBackTitleVisible: false,
+        }}
+      />
+      <Stack.Screen
+        name="ReportSale"
+        component={ReportSaleScreen}
+        options={{
+          title: 'Report a Sale',
           headerBackTitleVisible: false,
         }}
       />
