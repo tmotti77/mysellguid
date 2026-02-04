@@ -5,9 +5,18 @@
       "Bash(npm run start:dev:*)",
       "Bash(curl:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(bunx tsc:*)",
+      "Bash(npx supabase functions deploy:*)",
+      "Bash(npx supabase login:*)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_3f9ce5db30c4a5694276edda17f8c494bbb2b021 npx supabase functions deploy:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "octocode"
+  ]
 }
