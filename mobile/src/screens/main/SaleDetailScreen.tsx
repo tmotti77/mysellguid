@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   Share,
+  Linking,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
@@ -117,6 +118,16 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
+  const handleDirections = () => {
+    const lat = sale?.latitude != null ? Number(sale.latitude) : sale?.store?.latitude != null ? Number(sale.store.latitude) : null;
+    const lng = sale?.longitude != null ? Number(sale.longitude) : sale?.store?.longitude != null ? Number(sale.store.longitude) : null;
+    if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) {
+      Alert.alert('Location Unavailable', 'This sale does not have location information');
+      return;
+    }
+    Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
+  };
+
   const handleWhatsAppShare = async () => {
     if (!sale) return;
 
@@ -206,10 +217,11 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             </Text>
           </View>
           {sale.store?.address && (
-            <View style={styles.detailRow}>
+            <TouchableOpacity style={styles.detailRow} onPress={handleDirections}>
               <Ionicons name="location" size={20} color="#6B7280" />
-              <Text style={styles.detailText}>{sale.store.address}</Text>
-            </View>
+              <Text style={[styles.detailText, styles.detailTextLink]}>{sale.store.address}</Text>
+              <Ionicons name="chevron-forward" size={18} color="#4F46E5" />
+            </TouchableOpacity>
           )}
           <View style={styles.detailRow}>
             <Ionicons name="pricetag" size={20} color="#6B7280" />
@@ -218,6 +230,10 @@ const SaleDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <View style={styles.actions}>
+          <TouchableOpacity style={styles.directionsButton} onPress={handleDirections}>
+            <Ionicons name="navigate" size={20} color="#FFFFFF" />
+            <Text style={styles.directionsButtonText}>Directions</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
             <Ionicons name="share-social" size={20} color="#4F46E5" />
             <Text style={styles.shareButtonText}>Share</Text>
@@ -347,11 +363,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     marginLeft: 12,
+    flex: 1,
+  },
+  detailTextLink: {
+    color: '#4F46E5',
   },
   actions: {
     flexDirection: 'row',
     marginTop: 24,
     marginBottom: 40,
+  },
+  directionsButton: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#EF4444',
+    marginRight: 8,
+  },
+  directionsButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginLeft: 6,
   },
   shareButton: {
     flex: 1,

@@ -57,7 +57,7 @@ const DiscoverScreen: React.FC<Props> = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [slowLoading, setSlowLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('list'); // Default to list - map requires Google Maps API key config
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [radius, setRadius] = useState(5000); // 5km default
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');

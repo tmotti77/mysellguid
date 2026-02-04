@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 
-const API_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:3000/api';
+const API_URL = Constants.expoConfig?.extra?.apiUrl || 'https://qfffuuqldmjtxxihynug.supabase.co/functions/v1';
 
 // Log the API URL for debugging
 console.log('API URL:', API_URL);
